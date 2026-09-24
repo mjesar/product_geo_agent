@@ -143,6 +143,13 @@ Follow `docs/development-plan.md` for the sequence of steps. For each step:
    passes) rather than waiting until the whole step is done — small commits, not one
    giant commit per branch. Suggest a commit message following the Repo conventions
    above; the user still runs `git add`/`commit` themselves.
+   - **Grouping uncommitted changes into commits**: if the pending changes are one
+     related unit of work (e.g. a class + its spec, or several edits that only make
+     sense together), suggest a single commit. If they're actually separate concerns
+     that happen to be uncommitted at the same time (e.g. a workflow-rule change in
+     `CLAUDE.md`, an unrelated README edit, and a `.gitignore` tweak), suggest that
+     many separate commits instead, each with its own message — don't collapse
+     unrelated work into one commit just because it's convenient.
 3. **When a step's work is complete and its spec(s) pass**, say clearly that the
    branch is done and it's time to open a PR, then write a PR description
    (see PR descriptions below) for the user to paste in when they open the PR
