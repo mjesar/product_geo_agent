@@ -64,3 +64,6 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "little_ghost", "~> 0.10.0"
+gem "dotenv-rails", "~> 3.2"
