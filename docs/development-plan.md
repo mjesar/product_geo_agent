@@ -17,7 +17,7 @@ Branch: (done directly on `master`, pre-workflow)
 - Shopify Storefront token generated and verified via curl
 
 ## ✅ Step 1 — ShopifyStorefront::Client
-Branch: (committed directly to `master`, pre-workflow — same as step 0)
+Branch: `storefront-client` (PR #5, merged)
 - `app/services/shopify_storefront/client.rb`
 - Wraps Storefront GraphQL POST requests
 - Injectable Faraday connection (dependency injection, for testability)
