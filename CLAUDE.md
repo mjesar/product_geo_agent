@@ -135,6 +135,13 @@ are real gaps here, not just nice-to-haves:
   round-trip) — don't stress-test it
 - No delivery-date or review-aggregation checks in v1 (Storefront API has no universal
   fields for these) — noted as a possible future `check_fulfillment_clarity` tool
+- **Gemini model availability**: `little_ghost`'s own docs example uses
+  `gemini-2.5-flash` — this is deprecated for new users (404). Their own suggested
+  replacement, `gemini-3.8-flash`, was returning 503 "high demand" errors as of Sept
+  2026 (confirmed transient via raw API, not our bug). Currently using
+  `gemini-flash-lite-latest`, which works. If this project stops working against
+  Gemini with a 404/model-not-found error, check for a model name change first before
+  assuming the code broke.
 
 ## Repo conventions
 - Default branch: `master` (not `main`)
