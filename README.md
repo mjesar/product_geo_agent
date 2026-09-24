@@ -16,6 +16,8 @@ Give it a product from a Shopify store, and the agent:
 
 The agent decides which checks to run and in what order — it isn't a fixed pipeline. If a product's description is already strong, it can skip deeper checks; if the FAQ page check comes back empty, it tries the metafield fallback before concluding there's no FAQ content at all.
 
+**[→ Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk)** — diagrams of the system architecture, the agent's decision flow, and the dev workflow used to build this.
+
 ## Why
 
 Most AI-readiness "audits" are just SEO checklists with an AI label on them. This project focuses specifically on what's unique to AI discoverability: whether an LLM would actually cite or recommend the product, not just whether the page is technically well-formed.
@@ -31,6 +33,13 @@ Most AI-readiness "audits" are just SEO checklists with an AI label on them. Thi
 ## Status
 
 🚧 Early development — building tool-by-tool, starting with product data retrieval.
+
+## Docs
+
+- [Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk) — diagrams: system architecture, agent decision flow, dev workflow
+- [`docs/development-plan.md`](docs/development-plan.md) — step-by-step build plan, one branch/PR per step
+- [`docs/agent-concepts.md`](docs/agent-concepts.md) — running notes on agent-development concepts learned while building this
+- [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md) — how the Storefront API token was set up
 
 ## Setup
 

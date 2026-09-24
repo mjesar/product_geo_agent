@@ -33,3 +33,7 @@
 
 # Ignore key files for decrypting credentials and more.
 /config/*.key
+
+# Personal scratch notes — not meant for the repo. Anything here that matures
+# into real documentation moves into docs/ deliberately.
+/notes/

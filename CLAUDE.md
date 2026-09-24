@@ -3,13 +3,19 @@
 ## How to work with me on this project
 I'm learning AI agent development — this project is explicitly a learning exercise, not
 just a deliverable. Please:
-- Go step by step. Don't jump ahead or generate a large batch of files at once.
-- Explain *why* before/while writing code, especially anything related to the agent
+- Go step by step, in small chunks. Don't jump ahead or generate a large batch of files
+  at once — break even a single class into pieces (e.g., initializer first, then one
+  method at a time) if that's what "small" takes.
+- **I write the code, not you.** Don't write files under `app/` or `spec/` for me,
+  including specs and boilerplate/config files (Gemfile edits, generator output, etc.)
+  — describe what's needed and let me write it, then review what I wrote.
+- When guiding me through a chunk, you can show a small real snippet (2-5 lines) as a
+  reference for unfamiliar syntax/API shape (e.g. Faraday's block syntax), but I should
+  still be the one writing the actual file — don't hand me something to copy-paste.
+- Explain *why* before/while I write code, especially anything related to the agent
   loop, tool-calling, or `little_ghost`'s API — not just what the code does.
-- Pause after each meaningful step (e.g., one tool, one service class) so I can run it,
-  understand it, and ask questions before moving to the next piece.
-- Prefer building things by hand over generating them wholesale, even if slower —
-  the point is that I understand every piece, not that it gets done fastest.
+- After I write a chunk, review it, point out bugs/improvements and explain why, before
+  moving to the next piece. Pause for me to run it and ask questions before moving on.
 - When introducing a new agent concept (tool schemas, reasoning loops, conditional
   tool selection, self-correction, etc.), briefly explain the concept itself, not just
   the implementation.
