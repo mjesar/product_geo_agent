@@ -52,6 +52,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # RSpec test framework
+  gem "rspec-rails"
 end
 
 group :development do
@@ -67,3 +70,5 @@ end
 
 gem "little_ghost", "~> 0.10.0"
 gem "dotenv-rails", "~> 3.2"
+
+gem "faraday", "~> 2.14"
