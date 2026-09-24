@@ -119,15 +119,53 @@ System prompt strategy (not a fixed pipeline):
 - Default branch: `master` (not `main`)
 - Commit messages: lowercase, single-line, no trailing period
 - No Claude/Anthropic attribution in commits or PR descriptions
-- User runs all `git add`/`commit`/`push` themselves
+- User runs all `git add`/`commit`/`push` themselves, and creates branches/PRs/merges
+  themselves via the GitHub UI (see Git workflow below) — suggest the command for
+  branch creation and merging, don't run it. For PRs specifically, don't give a
+  `gh pr create` command at all — write the PR description text instead (see below).
+
+## Git workflow — branch per step, PR per branch
+Follow `docs/development-plan.md` for the sequence of steps. For each step:
+
+1. **Before starting a new step's work**, suggest creating a new branch off `master`
+   named after that step (see the plan for exact names, e.g. `get-product-data-tool`).
+   Do not start writing code for a new step directly on `master`, and do not continue
+   piling unrelated steps onto a branch that already has a merged purpose.
+2. **While a step is in progress**, stay on that one branch — don't jump ahead to the
+   next step's branch until the current one is merged. Remind the user to commit at
+   each natural checkpoint (e.g. once a class + its spec are written and the spec
+   passes) rather than waiting until the whole step is done — small commits, not one
+   giant commit per branch. Suggest a commit message following the Repo conventions
+   above; the user still runs `git add`/`commit` themselves.
+3. **When a step's work is complete and its spec(s) pass**, say clearly that the
+   branch is done and it's time to open a PR, then write a PR description
+   (see PR descriptions below) for the user to paste in when they open the PR
+   themselves from the GitHub UI. Don't run `gh pr create` — that step is manual.
+4. **After a PR is merged**, suggest pulling `master` and creating the next step's
+   branch — don't leave the local repo on a stale merged branch.
+5. Mark the corresponding step in `docs/development-plan.md` as ✅ once merged (🔶 while
+   in progress), so the plan file stays an accurate running status, not just a static
+   checklist.
+
+This applies whether the work is happening in chat or in Claude Code — both should
+proactively suggest the branch/merge checkpoints and offer to draft the PR description
+above rather than waiting to be asked.
+
+## PR descriptions
+- Write these like a human describing their own work to a teammate, not like
+  generated changelog boilerplate. No "This PR introduces...", no restating the diff
+  file-by-file, no filler sentences that don't carry information.
+- Lead with what changed and why — the why matters more than the what, since the
+  what is visible in the diff itself.
+- Keep it short: a couple of sentences or a short paragraph is usually enough. Only
+  add a bullet list if there are genuinely distinct pieces worth calling out
+  separately (e.g. "also fixes an unrelated typo in X") — not one bullet per file
+  touched.
+- Mention test coverage in a line if relevant (e.g. "specs cover the happy path and
+  both error shapes"), don't paste spec output.
+- No Claude/Anthropic attribution (per Repo conventions above).
 
 ## Build order
-1. `ShopifyStorefront::Client` + `GetProductDataTool` (+ specs) — prove one real
-   product's data flows end-to-end (curl already confirmed the raw API call works)
-2. `CheckStructuredDataTool` (+ specs) — simplest independent check
-3. `CheckFaqPageTool` + `CheckFaqMetafieldTool` (+ specs) — build together to test
-   branching logic
-4. `CheckAiCitationTool` (+ specs) — hardest/most novel, save for once loop mechanics
-   are proven
-5. Wire all 5 into `ProductGeoAgent`, write system prompt, test on 2-3 real sandbox
-   products
+See `docs/development-plan.md` for the full step-by-step build plan (branch names,
+what each step contains, concept focus). Don't duplicate that list here — update the
+plan file directly as steps are added, reordered, or completed.
