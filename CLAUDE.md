@@ -95,6 +95,21 @@ System prompt strategy (not a fixed pipeline):
   cases (empty FAQ, no structured data, no citation found) are the actual point of
   this project's scoring logic.
 
+## Observability & evals (planned — see `docs/development-plan.md` steps 9-10)
+RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
+They prove nothing about two other things that matter for an agentic system, and both
+are real gaps here, not just nice-to-haves:
+- **Observability** — right now a completed audit run only shows the final score.
+  There's no visibility into which tools the agent called, in what order, with what
+  arguments, how long each took, or where it failed. Planned fix: log each tool call
+  to Rails' logger (or a structured log file) so a run produces a readable trace,
+  useful for debugging during development, not just after the fact.
+- **Evals** — RSpec can't tell you whether the agent's *judgment* is any good (is the
+  score right, are the flagged gaps the actual gaps), only whether the code ran
+  without crashing. Planned fix: a small hand-scored ground-truth set (5-8 real
+  sandbox products) the agent gets run against, to catch whether a scoring-rubric
+  change made things better or worse.
+
 ## Shopify auth setup (already done, for reference)
 - App type: custom app, created via Dev Dashboard (legacy custom app UI is gone as of
   Jan 2026 for new apps)

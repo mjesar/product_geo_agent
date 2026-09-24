@@ -22,6 +22,13 @@ The agent decides which checks to run and in what order — it isn't a fixed pip
 
 Most AI-readiness "audits" are just SEO checklists with an AI label on them. This project focuses specifically on what's unique to AI discoverability: whether an LLM would actually cite or recommend the product, not just whether the page is technically well-formed.
 
+## Related work
+
+This project covers agents and tool-calling end to end. For the other two pillars of
+this agentic-commerce work — MCP server design, and RAG (pgvector + Voyage embeddings)
+— see [`shop_mcp_server`](https://github.com/mjesar/shop_mcp_server), a separate
+project exposing a Shopify-style store to LLM agents.
+
 ## Tech stack
 
 - Ruby on Rails
