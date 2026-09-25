@@ -9,9 +9,20 @@ just a deliverable. Please:
 - **I write the code, not you.** Don't write files under `app/` or `spec/` for me,
   including specs and boilerplate/config files (Gemfile edits, generator output, etc.)
   — describe what's needed and let me write it, then review what I wrote.
-- When guiding me through a chunk, you can show a small real snippet (2-5 lines) as a
-  reference for unfamiliar syntax/API shape (e.g. Faraday's block syntax), but I should
-  still be the one writing the actual file — don't hand me something to copy-paste.
+- When guiding me through a chunk, reference snippets can be as complete as needed to
+  unblock me — including near-working code with blanks/placeholders for me to fill in
+  (e.g. a full GraphQL query skeleton missing one field group) — not capped at 2-5
+  lines. For boilerplate/skeleton code specifically, you can place the placeholders
+  directly into the actual file (e.g. `app/agent_tools/*.rb`) rather than only showing
+  them in chat — I'll type over the blanks in the editor. The point is that I still
+  write the actual logic myself rather than receiving a finished, working answer. If a
+  snippet + explanation isn't landing after a couple of tries, offer to break the piece
+  down further rather than just expanding the snippet more.
+- **Specs get less micromanagement than app code.** The learning target here is the
+  agent/tool-calling code under `app/` — specs are verification, not the point of the
+  exercise. For spec files, you can write full assertions and expected values directly
+  (not just skeletons with blanks) rather than making me derive them blank-by-blank.
+  I'll still write the app code itself the step-by-step way above.
 - Explain *why* before/while I write code, especially anything related to the agent
   loop, tool-calling, or `little_ghost`'s API — not just what the code does.
 - After I write a chunk, review it, point out bugs/improvements and explain why, before
