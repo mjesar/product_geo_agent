@@ -9,9 +9,20 @@ just a deliverable. Please:
 - **I write the code, not you.** Don't write files under `app/` or `spec/` for me,
   including specs and boilerplate/config files (Gemfile edits, generator output, etc.)
   — describe what's needed and let me write it, then review what I wrote.
-- When guiding me through a chunk, you can show a small real snippet (2-5 lines) as a
-  reference for unfamiliar syntax/API shape (e.g. Faraday's block syntax), but I should
-  still be the one writing the actual file — don't hand me something to copy-paste.
+- When guiding me through a chunk, reference snippets can be as complete as needed to
+  unblock me — including near-working code with blanks/placeholders for me to fill in
+  (e.g. a full GraphQL query skeleton missing one field group) — not capped at 2-5
+  lines. For boilerplate/skeleton code specifically, you can place the placeholders
+  directly into the actual file (e.g. `app/agent_tools/*.rb`) rather than only showing
+  them in chat — I'll type over the blanks in the editor. The point is that I still
+  write the actual logic myself rather than receiving a finished, working answer. If a
+  snippet + explanation isn't landing after a couple of tries, offer to break the piece
+  down further rather than just expanding the snippet more.
+- **Specs get less micromanagement than app code.** The learning target here is the
+  agent/tool-calling code under `app/` — specs are verification, not the point of the
+  exercise. For spec files, you can write full assertions and expected values directly
+  (not just skeletons with blanks) rather than making me derive them blank-by-blank.
+  I'll still write the app code itself the step-by-step way above.
 - Explain *why* before/while I write code, especially anything related to the agent
   loop, tool-calling, or `little_ghost`'s API — not just what the code does.
 - After I write a chunk, review it, point out bugs/improvements and explain why, before
@@ -95,6 +106,21 @@ System prompt strategy (not a fixed pipeline):
   cases (empty FAQ, no structured data, no citation found) are the actual point of
   this project's scoring logic.
 
+## Observability & evals (planned — see `docs/development-plan.md` steps 9-10)
+RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
+They prove nothing about two other things that matter for an agentic system, and both
+are real gaps here, not just nice-to-haves:
+- **Observability** — right now a completed audit run only shows the final score.
+  There's no visibility into which tools the agent called, in what order, with what
+  arguments, how long each took, or where it failed. Planned fix: log each tool call
+  to Rails' logger (or a structured log file) so a run produces a readable trace,
+  useful for debugging during development, not just after the fact.
+- **Evals** — RSpec can't tell you whether the agent's *judgment* is any good (is the
+  score right, are the flagged gaps the actual gaps), only whether the code ran
+  without crashing. Planned fix: a small hand-scored ground-truth set (5-8 real
+  sandbox products) the agent gets run against, to catch whether a scoring-rubric
+  change made things better or worse.
+
 ## Shopify auth setup (already done, for reference)
 - App type: custom app, created via Dev Dashboard (legacy custom app UI is gone as of
   Jan 2026 for new apps)
@@ -120,6 +146,13 @@ System prompt strategy (not a fixed pipeline):
   round-trip) — don't stress-test it
 - No delivery-date or review-aggregation checks in v1 (Storefront API has no universal
   fields for these) — noted as a possible future `check_fulfillment_clarity` tool
+- **Gemini model availability**: `little_ghost`'s own docs example uses
+  `gemini-2.5-flash` — this is deprecated for new users (404). Their own suggested
+  replacement, `gemini-3.8-flash`, was returning 503 "high demand" errors as of Sept
+  2026 (confirmed transient via raw API, not our bug). Currently using
+  `gemini-flash-lite-latest`, which works. If this project stops working against
+  Gemini with a 404/model-not-found error, check for a model name change first before
+  assuming the code broke.
 
 ## Repo conventions
 - Default branch: `master` (not `main`)

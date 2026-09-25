@@ -92,6 +92,36 @@ No new branch necessarily — likely small fixup commits/PRs as needed
   `CLAUDE.md`) so both FAQ branches get exercised in a real run, not just in specs
 - Update `docs/agent-concepts.md` with what was learned from watching real traces
 
+## ⬜ Step 9 — Observability: instrument the reasoning loop
+Branch: `agent-observability`
+- Log each tool call the agent makes — tool name, arguments, duration,
+  success/failure — to Rails' logger or a structured log file, so a completed audit
+  run produces a readable trace of what happened and how long each step took, not
+  just the final score
+- Needs the full agent (step 6) to exist first, since there's no reasoning loop to
+  instrument before then
+- Should earn its keep during development itself (debugging why the agent picked a
+  particular path or stalled on a tool call), not just be a resume line
+- **Concept focus:** observability for agentic systems — without this, a reasoning
+  loop is a black box; structured logging turns "the agent didn't answer" into
+  "get_product_data timed out after 8s" as a diagnosable trace, not a guess
+
+## ⬜ Step 10 — Eval harness: does the agent's judgment hold up?
+Branch: `eval-harness`
+- Pick 5-8 real products from the sandbox store, hand-score what each one *should*
+  get (expected score + expected gaps flagged), then run the real agent against them
+  and compare
+- Lives in `spec/evals/` or `docs/evals.md` — exact shape TBD once we see it; may not
+  fit neatly into RSpec's assert-and-pass model since eval output is closer to
+  "how far off was this" than "pass/fail"
+- Needs the full agent (step 6) and ideally the observability trace (step 9) to make
+  failures diagnosable, not just visible
+- **Concept focus:** evals vs. tests — RSpec specs prove the code doesn't crash and
+  returns the right shape; they say nothing about whether the agent's actual
+  judgment (the score, the gaps it flags) is any good. An eval harness is the
+  repeatable way to tell whether a scoring-rubric change made things better or
+  worse, not just "did it run"
+
 ---
 
 ## Not in this plan (future / out of scope for now)
