@@ -34,15 +34,27 @@ Branch: `get-product-data-tool`
 - **Concept focus:** tool schema definition (what little_ghost needs to describe this
   to the model), and why this spec mocks the client instead of re-stubbing HTTP
 
-## ⬜ Step 3 — CheckStructuredDataTool
+## ✅ Step 3 — CheckStructuredDataTool
 Branch: `check-structured-data-tool`
+- `app/services/shopify_storefront/password_auth.rb` — the sandbox store is on a
+  no-plan/development Shopify plan, which force-locks storefront password protection
+  on (the toggle in Admin → Online Store → Preferences is disabled, not just unchecked
+  — confirmed via screenshot, not assumption). POSTs the storefront password to
+  `/password`, captures the resulting `storefront_digest` cookie, so the real page can
+  be fetched instead of the password splash page. Needed for this tool to produce real
+  results against the sandbox; most live (non-development-plan) stores won't need this.
 - `app/services/geo_audit/structured_data_check.rb` — fetches the live product page
-  HTML, parses `<script type="application/ld+json">`, checks for `Product`/`FAQPage`
-  schema types
+  HTML (carrying the password cookie above), parses `<script type="application/ld+json">`,
+  checks for `Product`/`FAQPage` schema types
 - `app/agent_tools/check_structured_data_tool.rb` — thin wrapper
-- Spec: canned HTML fixtures (with/without structured data), no live fetches in tests
-- **Concept focus:** this tool has no dependency on the Storefront client at all — it's
-  a plain HTTP fetch. Good moment to notice not every tool needs the same shape.
+- Spec: canned HTML fixtures (with/without structured data), no live fetches in tests —
+  the password-auth piece gets its own spec stubbing the HTTP layer, same as
+  `ShopifyStorefront::Client`
+- **Concept focus:** this tool has no dependency on the Storefront *GraphQL* client at
+  all — it's a plain HTTP fetch (plus, as it turns out, a small auth wrinkle specific to
+  this store's plan tier). Good moment to notice not every tool needs the same shape,
+  and that the storefront password gate is a different auth boundary from the
+  Storefront API token entirely.
 
 ## ⬜ Step 4 — CheckFaqPageTool + CheckFaqMetafieldTool
 Branch: `faq-check-tools`
