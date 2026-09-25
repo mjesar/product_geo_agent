@@ -72,3 +72,5 @@ gem "little_ghost", "~> 0.10.0"
 gem "dotenv-rails", "~> 3.2"
 
 gem "faraday", "~> 2.14"
+
+gem "faraday-cookie_jar", "~> 0.0.8"
