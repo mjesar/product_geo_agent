@@ -3,30 +3,19 @@
 ## How to work with me on this project
 I'm learning AI agent development — this project is explicitly a learning exercise, not
 just a deliverable. Please:
-- Go step by step, in small chunks. Don't jump ahead or generate a large batch of files
-  at once — break even a single class into pieces (e.g., initializer first, then one
-  method at a time) if that's what "small" takes.
-- **I write the code, not you.** Don't write files under `app/` or `spec/` for me,
-  including specs and boilerplate/config files (Gemfile edits, generator output, etc.)
-  — describe what's needed and let me write it, then review what I wrote.
-- When guiding me through a chunk, reference snippets can be as complete as needed to
-  unblock me — including near-working code with blanks/placeholders for me to fill in
-  (e.g. a full GraphQL query skeleton missing one field group) — not capped at 2-5
-  lines. For boilerplate/skeleton code specifically, you can place the placeholders
-  directly into the actual file (e.g. `app/agent_tools/*.rb`) rather than only showing
-  them in chat — I'll type over the blanks in the editor. The point is that I still
-  write the actual logic myself rather than receiving a finished, working answer. If a
-  snippet + explanation isn't landing after a couple of tries, offer to break the piece
-  down further rather than just expanding the snippet more.
-- **Specs get less micromanagement than app code.** The learning target here is the
-  agent/tool-calling code under `app/` — specs are verification, not the point of the
-  exercise. For spec files, you can write full assertions and expected values directly
-  (not just skeletons with blanks) rather than making me derive them blank-by-blank.
-  I'll still write the app code itself the step-by-step way above.
-- Explain *why* before/while I write code, especially anything related to the agent
-  loop, tool-calling, or `little_ghost`'s API — not just what the code does.
-- After I write a chunk, review it, point out bugs/improvements and explain why, before
-  moving to the next piece. Pause for me to run it and ask questions before moving on.
+- **You write the code, chunk by chunk — not the whole file in one shot.** I want to
+  stay engaged and follow what's happening rather than have a finished file appear all
+  at once with nothing to absorb it. Write one small piece per turn (e.g. a class's
+  initializer, pause; then one method, pause; then the next), for files under `app/`
+  and `spec/` alike.
+- Explain *why* before/while you write each chunk — what the piece does and why it's
+  shaped that way — especially anything related to the agent loop, tool-calling, or
+  `little_ghost`'s API. Don't just narrate what the code does.
+- After each chunk, pause. Let me read it, run it, and ask questions before writing the
+  next piece — don't chain multiple pieces together without checking in.
+- Specs can move faster than app code — a full spec file in one turn is fine, since
+  specs are verification, not the learning target. App code under `app/` still goes
+  chunk by chunk.
 - When introducing a new agent concept (tool schemas, reasoning loops, conditional
   tool selection, self-correction, etc.), briefly explain the concept itself, not just
   the implementation.
@@ -153,6 +142,22 @@ are real gaps here, not just nice-to-haves:
   `gemini-flash-lite-latest`, which works. If this project stops working against
   Gemini with a 404/model-not-found error, check for a model name change first before
   assuming the code broke.
+- **Sandbox storefront is password-protected, and the toggle to disable it is locked**:
+  the store is on a no-plan/development Shopify plan, and Shopify force-enables
+  password protection for those — Admin → Online Store → Preferences shows the toggle
+  greyed out, not just switched on. `CheckStructuredDataTool` (step 3) needs a real
+  page fetch to test against actual data, so it includes a small
+  `ShopifyStorefront::PasswordAuth` piece that logs in via `/password`.
+  **Non-obvious wrinkle found while building it**: the login POST needs a Rails CSRF
+  `authenticity_token` scraped from a prior `GET /password` (tied to that request's
+  session cookie) — without it, Shopify silently treats *any* password, right or
+  wrong, as incorrect and always re-renders the same error page, which looked
+  deceptively like a generic response at first. `PasswordAuth` does a `GET` for the
+  token, then `POST`s it alongside the password, using a `faraday-cookie_jar`-backed
+  connection so the session cookie carries automatically between the two requests and
+  into later page fetches. If the store ever moves to a paid plan, this becomes
+  unnecessary but shouldn't need removing — `authenticate!` already no-ops when
+  `GET /password` doesn't return a form (i.e. the store isn't gated).
 
 ## Repo conventions
 - Default branch: `master` (not `main`)
