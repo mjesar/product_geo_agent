@@ -18,7 +18,7 @@ RSpec.describe GetProductDataTool do
             },
             "variants" => {
               "edges" => [
-                { "node" => { "title" => "Small", "price" => "12.00" } }
+                { "node" => { "title" => "Small", "price" => { "amount" => "12.00", "currencyCode" => "USD" } } }
               ]
             },
             "seo" => { "title" => "Cozy Wool Socks", "description" => "Buy warm socks" }
@@ -31,7 +31,7 @@ RSpec.describe GetProductDataTool do
           title: "Cozy Wool Socks",
           description: "Warm socks for winter.",
           images: [ "Socks on a table" ],
-          variants: [ { title: "Small", price: "12.00" } ],
+          variants: [ { title: "Small", price: { amount: "12.00", currency_code: "USD" } } ],
           seo: { "title" => "Cozy Wool Socks", "description" => "Buy warm socks" }
         )
       end
@@ -43,6 +43,17 @@ RSpec.describe GetProductDataTool do
 
         expect { tool.call({ "handle" => "missing-handle" }) }
           .to raise_error(LittleGhost::ToolError, /missing-handle/)
+      end
+    end
+
+    context "when the Storefront API request fails" do
+      it "raises a ToolError including the real reason" do
+        allow(client).to receive(:query).and_raise(
+          ShopifyStorefront::Client::Error, "Storefront API returned errors: Field must have selections"
+        )
+
+        expect { tool.call({ "handle" => "cozy-wool-socks" }) }
+          .to raise_error(LittleGhost::ToolError, /cozy-wool-socks.*Field must have selections/)
       end
     end
   end

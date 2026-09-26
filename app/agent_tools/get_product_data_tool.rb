@@ -22,7 +22,7 @@ class GetProductDataTool < LittleGhost::Tool
             edges { node { altText } }
           }
           variants(first: 10) {
-            edges { node { title price } }
+            edges { node { title price { amount currencyCode } } }
           }
           seo {
             title
@@ -33,7 +33,7 @@ class GetProductDataTool < LittleGhost::Tool
     GRAPHQL
 
     handle = input.fetch("handle")
-    data = @client.query(query, variables: { handle: handle })
+    data = fetch(query, handle)
     product = data["product"]
 
     raise LittleGhost::ToolError, "product not found for handle #{handle}" if product.nil?
@@ -42,8 +42,20 @@ class GetProductDataTool < LittleGhost::Tool
       title: product["title"],
       description: product["description"],
       images: product["images"]["edges"].map { |edge| edge["node"]["altText"] },
-      variants: product["variants"]["edges"].map { |edge| { title: edge["node"]["title"], price: edge["node"]["price"] } },
+      variants: product["variants"]["edges"].map { |edge| variant(edge["node"]) },
       seo: product["seo"]
     }
+  end
+
+  private
+
+  def fetch(query, handle)
+    @client.query(query, variables: { handle: handle })
+  rescue ShopifyStorefront::Client::Error => error
+    raise LittleGhost::ToolError, "Could not fetch product data for #{handle}: #{error.message}"
+  end
+
+  def variant(node)
+    { title: node["title"], price: { amount: node["price"]["amount"], currency_code: node["price"]["currencyCode"] } }
   end
 end
