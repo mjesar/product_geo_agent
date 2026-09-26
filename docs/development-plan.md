@@ -78,9 +78,13 @@ Branch: `check-ai-citation-tool`
 - **Concept focus:** the hardest/most novel tool — this is the one that's actually
   unique to "AEO" rather than dressed-up SEO. Expect this step to take longest.
 
-## ⬜ Step 6 — ProductGeoAgent (wiring it all together)
+## ⬜ Step 6 — GeoAuditAgent (wiring it all together)
 Branch: `product-geo-agent`
-- `app/agents/product_geo_agent.rb` — the `little_ghost` agent itself
+- `app/agents/geo_audit_agent.rb` — the `little_ghost` agent itself. Named
+  `GeoAuditAgent`, not `ProductGeoAgent`, because `config/application.rb` already
+  defines a top-level `ProductGeoAgent` module (Rails' own app namespace, derived
+  from the app name) — Zeitwerk silently hands back that empty module instead of
+  loading the agent file if the names collide, so the class needs a different name.
 - System prompt encoding the strategy (start with get_product_data, judge depth,
   FAQ fallback logic, citation check last, summarize with score + gaps)
 - Spec: integration-style spec mocking all 5 tools, asserting the agent calls them
@@ -91,7 +95,7 @@ Branch: `product-geo-agent`
 
 ## ⬜ Step 7 — CLI entrypoint
 Branch: `cli-entrypoint`
-- `bin/audit` — takes a product handle, runs `ProductGeoAgent`, prints the trace +
+- `bin/audit` — takes a product handle, runs `GeoAuditAgent`, prints the trace +
   final score readably
 - Spec (if reasonably testable) or manual verification against the sandbox store
 - **Concept focus:** none new — this is packaging, not agent concepts
