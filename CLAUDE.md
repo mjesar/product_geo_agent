@@ -52,6 +52,13 @@ building blocks for a separate planned Shopify app (`geo-aeo-shopify-app`).
   which doesn't apply here (one static Storefront token, no embedded app).
 
 ## Agent architecture
+The `little_ghost` agent class is `GeoAuditAgent` (`app/agents/geo_audit_agent.rb`), not
+`ProductGeoAgent` — that name is already taken by Rails' own app module (defined in
+`config/application.rb`, derived from the app name). Reusing it doesn't raise an error;
+Zeitwerk just silently hands back the empty app module instead of loading the agent file,
+so this isn't a naming preference, it's a hard collision. Leave the class named
+`GeoAuditAgent`.
+
 Five granular tools, agent orchestrates and conditionally calls them — NOT one combined tool.
 This is deliberate: the point of the project is to see the agent make real decisions
 (skip a check if a product's already strong; retry via a fallback tool before concluding
@@ -142,6 +149,31 @@ are real gaps here, not just nice-to-haves:
   `gemini-flash-lite-latest`, which works. If this project stops working against
   Gemini with a 404/model-not-found error, check for a model name change first before
   assuming the code broke.
+- **Multi-turn tool calling against Gemini needs an unreleased `little_ghost` fix**:
+  the first real multi-tool-calling run attempted in this project (via `GeoAuditAgent`
+  — every earlier spec either mocked the client or made a single-shot
+  `LittleGhost.generate` call with no tools) surfaced two real bugs in `little_ghost`
+  0.10.0's Gemini adapter, not anything in this app's own code:
+  1. Gemini attaches an opaque `thought_signature` to each function-call turn and
+     requires it echoed back on the next request; the adapter never read or forwarded
+     that field, so the second request in any tool-calling conversation got rejected
+     with HTTP 400 ("Function call is missing a thought_signature...").
+  2. Once that's fixed, the adapter sends the tool-*call* id as `functionResponse.name`
+     instead of the actual function name, which Gemini also rejects.
+  Filed and fixed both upstream: [littleghostai/little_ghost#110](https://github.com/littleghostai/little_ghost/issues/110)
+  (thought_signature) and [#111](https://github.com/littleghostai/little_ghost/issues/111)
+  (functionResponse.name), with PRs [#112](https://github.com/littleghostai/little_ghost/pull/112)
+  and [#113](https://github.com/littleghostai/little_ghost/pull/113) open against
+  `littleghostai/little_ghost`. Confirmed live: with both fixes combined, a full audit
+  completes end-to-end (five tool calls, real Gemini reasoning throughout). Until those
+  merge and ship in a release, `Gemfile` points `little_ghost` at
+  `github.com/mjesar/little_ghost` on a local-only branch
+  (`combined-gemini-fixes-local-only`, not a PR, just proves the two fixes compose) —
+  **that branch must be pushed to the fork for `bundle install` to resolve at all**.
+  Revert the Gemfile to `gem "little_ghost", "~> 0.10.0"` once both PRs merge upstream
+  and a new version ships. `spec/agents/geo_audit_agent_live_spec.rb` is marked
+  `pending` for this reason, not deleted — it'll flag itself the moment it starts
+  passing for real (i.e. once running against a released, fixed gem version).
 - **Sandbox storefront is password-protected, and the toggle to disable it is locked**:
   the store is on a no-plan/development Shopify plan, and Shopify force-enables
   password protection for those — Admin → Online Store → Preferences shows the toggle

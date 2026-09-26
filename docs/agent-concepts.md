@@ -74,6 +74,36 @@ Different products will produce different traces depending on what the agent fin
 along the way — that variability is the actual demonstration of "the agent is
 deciding," not just executing a fixed script.
 
+## Specs vs. evals
+
+RSpec specs and evals answer different questions, and it's worth keeping them
+distinct rather than expecting one to stand in for the other:
+
+- **Specs prove the code handles the model's requests correctly.** Given that the
+  model asked to call `check_faq_page`, does the tool return the right shape? Given a
+  missing product, does it raise the right error? These are deterministic questions
+  with a correct answer, so they belong in RSpec with mocked model responses.
+- **Evals prove the model's decisions are good.** Given the system prompt, does the
+  model actually choose to call `check_faq_page` before `check_faq_metafield`? Is the
+  final score reasonable? These aren't deterministic, an LLM can make a different
+  (even correct) choice on a different run, so no mock can honestly answer them —
+  only real runs against real products, compared to a hand-scored expectation (the
+  planned eval harness, step 10), can.
+
+`GeoAuditAgent`'s own spec suite reflects this split: `geo_audit_agent_spec.rb`
+checks wiring only (tools registered, system prompt content) — no mocking of
+multi-turn model behavior was built, since a fake model response would only prove
+Ruby handles that fake response correctly, never that the real model would choose it.
+`geo_audit_agent_live_spec.rb` is the one place that runs the real agent against a
+real product with the real model — tagged `:live` and excluded from the default
+suite, since it costs real Gemini quota and depends on the sandbox being reachable.
+
+That first live run immediately proved the value of keeping it separate: it surfaced
+a real bug (Gemini's `thought_signature` requirement for multi-turn tool calls isn't
+supported by `little_ghost` 0.10.0's Gemini adapter — see Known limitations in
+`CLAUDE.md`) that no mocked spec could ever have caught, since every mocked spec
+necessarily assumes the model/adapter round-trip already works.
+
 ## Open questions / things to learn next
 - How does `little_ghost` actually expose tool-call decisions — do I get visibility
   into *why* it picked a tool, or just the fact that it did?

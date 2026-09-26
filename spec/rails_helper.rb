@@ -67,6 +67,10 @@ RSpec.configure do |config|
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
+
+  # Specs tagged :live hit real external services (Gemini, the Shopify sandbox) and
+  # are excluded from the default run. Run them deliberately with `--tag live`.
+  config.filter_run_excluding :live
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 end
