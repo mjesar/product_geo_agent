@@ -25,7 +25,7 @@ Branch: `storefront-client` (PR #5, merged)
 - Spec: happy path, variables passed through, GraphQL error, HTTP error (4 examples)
 - **Concept focus:** dependency injection, why GraphQL needs two error shapes handled as one
 
-## 🔶 Step 2 — GetProductDataTool
+## ✅ Step 2 — GetProductDataTool
 Branch: `get-product-data-tool`
 - `app/agent_tools/get_product_data_tool.rb`
 - Wraps `ShopifyStorefront::Client` to fetch one product's title, description,
