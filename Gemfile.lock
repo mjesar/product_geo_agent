@@ -1,3 +1,14 @@
+GIT
+  remote: https://github.com/mjesar/little_ghost.git
+  revision: 4d40ee9809ebaa35a8af4823a35e8a60913f4894
+  ref: 4d40ee9809ebaa35a8af4823a35e8a60913f4894
+  specs:
+    little_ghost (0.10.0)
+      base64
+      fiddle
+      irb (~> 1.16)
+      opentelemetry-api (~> 1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -173,11 +184,6 @@ GEM
       zeitwerk (>= 2.6.18, < 3.0)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
-    little_ghost (0.10.0)
-      base64
-      fiddle
-      irb (~> 1.16)
-      opentelemetry-api (~> 1.0)
     logger (1.7.0)
     loofah (2.25.2)
       crass (~> 1.0.2)
@@ -438,7 +444,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
-  little_ghost (~> 0.10.0)
+  little_ghost!
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)
@@ -517,7 +523,7 @@ CHECKSUMS
   kamal (2.12.0) sha256=c51d1ab085e515470f98d0c0f043637122b5ebf76e8b610cb1fbbed0b7f9b8fa
   language_server-protocol (3.17.0.6) sha256=5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
-  little_ghost (0.10.0) sha256=fb2257dd71db9b641b6db6ea088b0651c182bc9dcaf4448d2b0198f2170c3ffd
+  little_ghost (0.10.0)
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   loofah (2.25.2) sha256=2007f746959ac65552456e04b433e83deb22759ab38c838b4445c70e43425918
   mail (2.9.1) sha256=06574eca475253d6c18145dd70af80d0eb970182d55053497c5f4d797ea160e8

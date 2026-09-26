@@ -169,11 +169,12 @@ are real gaps here, not just nice-to-haves:
   merge and ship in a release, `Gemfile` points `little_ghost` at
   `github.com/mjesar/little_ghost` on a local-only branch
   (`combined-gemini-fixes-local-only`, not a PR, just proves the two fixes compose) —
-  **that branch must be pushed to the fork for `bundle install` to resolve at all**.
-  Revert the Gemfile to `gem "little_ghost", "~> 0.10.0"` once both PRs merge upstream
-  and a new version ships. `spec/agents/geo_audit_agent_live_spec.rb` is marked
-  `pending` for this reason, not deleted — it'll flag itself the moment it starts
-  passing for real (i.e. once running against a released, fixed gem version).
+  `Gemfile` pins that branch's exact commit via `ref:` rather than `branch:`, so it
+  keeps resolving even if the branch itself later gets rebased or deleted once the
+  real PRs merge. `spec/agents/geo_audit_agent_live_spec.rb` genuinely passes against
+  this pinned commit (no longer `pending`) — revert the Gemfile to
+  `gem "little_ghost", "~> 0.10.0"` once both PRs merge upstream and a new version
+  ships, at which point that spec should keep passing unchanged.
 - **Sandbox storefront is password-protected, and the toggle to disable it is locked**:
   the store is on a no-plan/development Shopify plan, and Shopify force-enables
   password protection for those — Admin → Online Store → Preferences shows the toggle
