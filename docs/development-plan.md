@@ -56,7 +56,7 @@ Branch: `check-structured-data-tool`
   and that the storefront password gate is a different auth boundary from the
   Storefront API token entirely.
 
-## ⬜ Step 4 — CheckFaqPageTool + CheckFaqMetafieldTool
+## ✅ Step 4 — CheckFaqPageTool + CheckFaqMetafieldTool
 Branch: `faq-check-tools`
 - `app/services/geo_audit/faq_check.rb` — page lookup via Storefront client
 - `app/agent_tools/check_faq_page_tool.rb`
