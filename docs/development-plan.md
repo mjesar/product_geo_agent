@@ -68,7 +68,7 @@ Branch: `faq-check-tools`
   actually gets exercised for the first time — worth a note in `docs/agent-concepts.md`
   once this is built and tested against the agent (step 6)
 
-## ⬜ Step 5 — CheckAiCitationTool
+## ✅ Step 5 — CheckAiCitationTool
 Branch: `check-ai-citation-tool`
 - `app/services/geo_audit/citation_check.rb` — direct Gemini call, no tools attached,
   asks a category-relevant question, checks if product/store name appears in response
