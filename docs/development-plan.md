@@ -93,14 +93,33 @@ Branch: `product-geo-agent`
 - **Concept focus:** this is the first time you'll actually *watch* the reasoning
   loop happen end-to-end — the payoff step for everything built so far
 
-## ⬜ Step 7 — CLI entrypoint
+## ⬜ Step 7 — Move scoring out of the model
+Branch: `deterministic-scoring`
+- Right now the system prompt asks the model to calculate the score out of 100 itself
+  from the rubric table — but arithmetic doesn't need a language model, and asking one
+  to do it means the same tool results could produce a slightly different score on two
+  different runs, since nothing about token-by-token generation guarantees the same
+  arithmetic twice.
+- Move score calculation into Ruby: sum the rubric weights directly from the tool call
+  results the agent already collected (FAQ content found → +15, structured data present
+  → +15, etc.). The model keeps the job it's actually suited for — explaining the gaps
+  in plain language — and drops the arithmetic.
+- Update `system_prompt.erb` to drop the "score out of 100" instruction, keep the
+  "summarize the gaps" instruction
+- Spec: deterministic score calculation against various tool-result combinations — this
+  becomes properly testable in a way "the model calculated 73" never was
+- **Concept focus:** what belongs in code vs. in the model — determinism belongs in
+  code, judgment belongs in the model. See the new "System prompts" section in
+  `docs/agent-concepts.md` for the full reasoning.
+
+## ⬜ Step 8 — CLI entrypoint
 Branch: `cli-entrypoint`
 - `bin/audit` — takes a product handle, runs `GeoAuditAgent`, prints the trace +
   final score readably
 - Spec (if reasonably testable) or manual verification against the sandbox store
 - **Concept focus:** none new — this is packaging, not agent concepts
 
-## ⬜ Step 8 — Real sandbox run + scoring calibration
+## ⬜ Step 9 — Real sandbox run + scoring calibration
 No new branch necessarily — likely small fixup commits/PRs as needed
 - Run against 3-5 real sandbox products
 - Sanity-check the scoring weights actually produce sensible-feeling results
@@ -108,7 +127,7 @@ No new branch necessarily — likely small fixup commits/PRs as needed
   `CLAUDE.md`) so both FAQ branches get exercised in a real run, not just in specs
 - Update `docs/agent-concepts.md` with what was learned from watching real traces
 
-## ⬜ Step 9 — Observability: instrument the reasoning loop
+## ⬜ Step 10 — Observability: instrument the reasoning loop
 Branch: `agent-observability`
 - Log each tool call the agent makes — tool name, arguments, duration,
   success/failure — to Rails' logger or a structured log file, so a completed audit
@@ -122,7 +141,7 @@ Branch: `agent-observability`
   loop is a black box; structured logging turns "the agent didn't answer" into
   "get_product_data timed out after 8s" as a diagnosable trace, not a guess
 
-## ⬜ Step 10 — Eval harness: does the agent's judgment hold up?
+## ⬜ Step 11 — Eval harness: does the agent's judgment hold up?
 Branch: `eval-harness`
 - Pick 5-8 real products from the sandbox store, hand-score what each one *should*
   get (expected score + expected gaps flagged), then run the real agent against them
@@ -130,7 +149,7 @@ Branch: `eval-harness`
 - Lives in `spec/evals/` or `docs/evals.md` — exact shape TBD once we see it; may not
   fit neatly into RSpec's assert-and-pass model since eval output is closer to
   "how far off was this" than "pass/fail"
-- Needs the full agent (step 6) and ideally the observability trace (step 9) to make
+- Needs the full agent (step 6) and ideally the observability trace (step 10) to make
   failures diagnosable, not just visible
 - **Concept focus:** evals vs. tests — RSpec specs prove the code doesn't crash and
   returns the right shape; they say nothing about whether the agent's actual

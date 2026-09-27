@@ -55,11 +55,97 @@ before concluding there's genuinely no FAQ content — rather than giving up aft
 failed lookup. This is driven by the system prompt's instructions, not fixed
 if/else logic in Ruby — the *model* decides to retry.
 
-## System prompt as strategy, not a script
+## System prompts
 
-The system prompt tells the agent the *strategy* ("try X first, fall back to Y if X
-finds nothing, always run Z last") rather than a literal step-by-step script. The model
-fills in the actual decision-making at runtime based on what each tool call returns.
+**System prompt vs. user message**
+
+A **user message** is the specific ask for one turn — "Audit the Shopify product with
+handle 'the-complete-snowboard'." A **system prompt** is standing instructions the
+model follows on *every* message in the conversation, regardless of what the user
+message says. `GeoAuditAgent`'s system prompt (`app/prompts/geo_audit/system_prompt.erb`)
+never mentions a specific product — it says what an audit *is*, what order to run the
+five tools in, and how to score the result. The user message just supplies the one
+thing that varies: which product handle to run it against.
+
+Think of the system prompt as the job description, and the user message as the
+specific work order for today.
+
+**Practices for writing one** (cross-checked against `system_prompt.erb`):
+
+- **Role and goal first.** Before any instructions, say what the model *is* and what
+  it's for. `system_prompt.erb` opens with "You audit a single Shopify product for how
+  discoverable it would be to AI shopping assistants" — that framing shapes everything
+  that follows, since "for AI assistants" produces different judgment than "reads well
+  to a human" would.
+- **Explain why, not just what.** "Never pass the product's own name into the question
+  you'd ask — the point is whether it comes up unprompted" tells the model the *reason*
+  for the rule, not just the rule. A model that understands why is more likely to apply
+  the same judgment correctly to a case the prompt didn't spell out explicitly.
+- **Say what to do, not only what not to do.** A rule like "don't stop after
+  check_faq_page finds nothing" only describes a gap. "Call check_faq_metafield before
+  concluding there's no FAQ content" tells the model the actual next action to take.
+- **Strategy, not a script.** The prompt says try X first, fall back to Y if X finds
+  nothing, always run Z last — it doesn't hardcode "if description.length < 50 then...".
+  The model fills in the actual decision at runtime based on what each tool call
+  returns. A literal step-by-step script would just be Ruby wearing a prompt as a
+  costume, and would defeat the point of having an agent at all.
+- **Cover edge cases explicitly.** "If it finds nothing" (empty FAQ result), "once you
+  already know the product's title" (an ordering dependency) — naming edge cases in the
+  prompt is cheaper than discovering the model mishandles them during a real run.
+- **Specify the output format.** The rubric table plus "finish with the overall score
+  and the top 2-3 gaps" tells the model exactly what shape the final answer needs, not
+  just what to think about along the way.
+- **No contradictions.** A prompt that says "be thorough" in one line and "be concise"
+  in another forces the model to guess which one wins — conflicting instructions can
+  degrade a model's output in unpredictable ways, worse than either instruction alone.
+- **Test changes with evals, not vibes.** A wording change can shift model behavior in
+  ways that read fine on the page but don't hold up in a real run (see the eval
+  harness step in `docs/development-plan.md`).
+  A prompt is code that happens to be written in English, and needs the same "does this
+  actually work" verification any other code change gets.
+
+**Tool descriptions are prompts too**
+
+It's tempting to think only the system prompt counts as "the prompt" and tool
+definitions are just plumbing, but every tool's `description` field is also read by the
+model at decision time — it's how the model decides *which* tool to call and *when*.
+`GetProductDataTool`'s description ends with "Always call this first — the
+description's length and quality determine how deep the remaining checks need to go,"
+which is doing real prompting work, not just documentation. A vague tool description
+("fetches product data") gives the model far less to reason from, even sitting under a
+well-written system prompt.
+
+**System prompt vs. prompt engineering vs. context engineering**
+
+These get used interchangeably but mean different things:
+- A **system prompt** is one specific artifact: the standing instructions text itself.
+- **Prompt engineering** is the practice of writing and iterating on prompt text
+  (system prompts, user messages, tool descriptions) to get better model behavior —
+  wording, examples, structure.
+- **Context engineering** is the broader discipline: deciding *everything* that ends up
+  in the model's context window before it responds — which tools are available, what
+  data a tool call returns and in how much detail, what's summarized vs. included in
+  full, what conversation history is kept vs. dropped. The system prompt is one piece
+  of the context; so is every tool result the agent has accumulated by the time it
+  makes its final decision. Prompt engineering optimizes the words; context engineering
+  optimizes what's in the room at all.
+
+**What belongs in code vs. in the model**
+
+Right now, `system_prompt.erb` asks the model to calculate the final score out of 100
+itself, by reading the rubric table and doing the weighted arithmetic in its head.
+That's the wrong split of responsibility: arithmetic is exactly the kind of thing a
+language model is bad at being *consistent* about — the same tool results could produce
+a slightly different score on two different runs, since nothing about token-by-token
+generation guarantees the same arithmetic twice.
+
+**Planned improvement** (see the new step in `docs/development-plan.md`): move score
+calculation into Ruby, computed directly from the tool results the agent already
+collected (FAQ content found → +15, structured data present → +15, etc.), and leave the
+model responsible only for what it's actually good at — explaining the gaps in plain
+language. The general rule this suggests: if a step has one deterministic correct
+answer, do it in code; if a step requires judgment over unstructured content, that's
+where the model earns its keep.
 
 ## What a "trace" looks like
 

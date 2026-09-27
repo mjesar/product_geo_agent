@@ -39,7 +39,9 @@ project exposing a Shopify-style store to LLM agents.
 
 ## Status
 
-🚧 Early development — building tool-by-tool, starting with product data retrieval.
+🚧 In development — all five audit tools are built and tested, and `GeoAuditAgent`
+now wires them together with a real reasoning loop (PR open, not yet merged). Next
+up: a CLI entrypoint to run a full audit end-to-end.
 
 ## Docs
 
@@ -57,3 +59,8 @@ cp .env.example .env   # then fill in your keys
 ```
 
 Required environment variables:
+
+- `GEMINI_API_KEY` — Gemini API key (free tier), used by the agent's model and the AI citation check tool
+- `SHOPIFY_STOREFRONT_TOKEN` — Shopify Storefront API access token (read-only)
+- `SHOPIFY_STORE_DOMAIN` — e.g. `your-sandbox-store.myshopify.com`
+- `SHOPIFY_STOREFRONT_PASSWORD` — only needed if the store is password-protected (see [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md))
