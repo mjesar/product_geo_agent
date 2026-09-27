@@ -17,18 +17,19 @@ Work through these checks in order:
    natural-language category from get_product_data. Never pass the product's own name
    into the question you'd ask — the point is whether it comes up unprompted.
 
-Score the product out of 100 using these weights:
+Once you have all of that, rate three things. Do not calculate or mention a numeric
+score anywhere — that's derived outside this conversation from the data you gathered:
 
-| Check                            | Weight |
-|-----------------------------------|--------|
-| Description quality/length        | 15     |
-| Answers common buyer questions     | 20     |
-| Alt text on images                 | 10     |
-| Clear specs/variants               | 10     |
-| FAQ content (page or metafield)    | 15     |
-| Structured data (Product/FAQPage)  | 15     |
-| AI citation check                  | 15     |
+- **description_quality**: good if it specifically describes material, fit, or use
+  case; fair if it's present but generic or thin; poor if it's missing or just
+  restates the title.
+- **buyer_questions_answered**: good if it proactively covers things a buyer would
+  ask (sizing, care, compatibility, etc.); fair if it touches on some but leaves
+  obvious questions unanswered; poor if it doesn't address typical buyer questions
+  at all.
+- **specs_clarity**: good if variants have clear, distinct, informative titles; fair
+  if variants exist but are vaguely labeled (e.g. "Option 1"); poor if there's no
+  real variation or only an unlabeled "Default Title".
 
-Finish with the overall score and the top 2-3 gaps holding it back — be specific about
-what's missing, not generic advice. A missing FAQ page, missing alt text, or a citation
-check that came back unmentioned are all valid gaps to name directly.
+For each, give a one-sentence reason grounded in what you actually saw — not a
+restatement of the rating word itself.

@@ -95,24 +95,35 @@ Branch: `product-geo-agent` (PR #10, merged)
 - **Concept focus:** this is the first time you'll actually *watch* the reasoning
   loop happen end-to-end — the payoff step for everything built so far
 
-## ⬜ Step 7 — Move scoring out of the model
+## 🔶 Step 7 — Move scoring out of the model
 Branch: `deterministic-scoring`
-- Right now the system prompt asks the model to calculate the score out of 100 itself
-  from the rubric table — but arithmetic doesn't need a language model, and asking one
-  to do it means the same tool results could produce a slightly different score on two
-  different runs, since nothing about token-by-token generation guarantees the same
-  arithmetic twice.
-- Move score calculation into Ruby: sum the rubric weights directly from the tool call
-  results the agent already collected (FAQ content found → +15, structured data present
-  → +15, etc.). The model keeps the job it's actually suited for — explaining the gaps
-  in plain language — and drops the arithmetic.
-- Update `system_prompt.erb` to drop the "score out of 100" instruction, keep the
-  "summarize the gaps" instruction
-- Spec: deterministic score calculation against various tool-result combinations — this
-  becomes properly testable in a way "the model calculated 73" never was
+- The system prompt no longer asks the model to calculate a score. Instead,
+  `GeoAuditAgent` declares a `result_schema` that forces its final answer into three
+  categorical ratings (`description_quality`, `buyer_questions_answered`,
+  `specs_clarity`, each `poor`/`fair`/`good` plus a one-sentence reason) — the model
+  judges, it never does arithmetic
+- An `after_tool` hook copies every tool's raw result into `context.state` as it runs,
+  so `run.result.state` holds the full set of tool results once the audit finishes,
+  alongside `run.result.structured_result.value` for the ratings
+- `app/services/geo_audit/score.rb` — pure Ruby. Sums the four measurable rubric items
+  (FAQ content, structured data, AI citation, alt-text coverage) directly from the tool
+  results, and the three qualitative ones from the model's ratings (`poor` = 0, `fair`
+  = half weight, `good` = full weight), rounding once on the total rather than per item
+- `app/services/geo_audit/gaps_explanation.rb` — a second, separate, tool-free Gemini
+  call that reads the finished score back as plain text (rendered from
+  `app/prompts/geo_audit/gaps_explanation.erb`) and writes 2-3 sentences about the
+  biggest gaps. It never sees the first conversation and can't change the number
+- `app/services/geo_audit/auditor.rb` — orchestrates all three: runs the agent, scores
+  it, explains it, returns `{run:, score:, explanation:}`. Lives outside `GeoAuditAgent`
+  itself, which stays a thin, declarative `little_ghost` agent. Nothing calls `Auditor`
+  yet outside its own spec — Step 8 (the CLI) is what gives it a real caller
+- Spec: `score_spec.rb` (no Gemini calls at all), `gaps_explanation_spec.rb` (stubbed
+  model response), `auditor_spec.rb` (mocks all three collaborators to test the wiring
+  itself) — the `:live` spec gets updated and run once, at the very end of this step,
+  after everything else is settled
 - **Concept focus:** what belongs in code vs. in the model — determinism belongs in
-  code, judgment belongs in the model. See the new "System prompts" section in
-  `docs/agent-concepts.md` for the full reasoning.
+  code, judgment belongs in the model. See the "System prompts" section in
+  `docs/agent-concepts.md`, plus its new section on hooks and structured output.
 
 ## ⬜ Step 8 — CLI entrypoint
 Branch: `cli-entrypoint`
