@@ -139,13 +139,47 @@ language model is bad at being *consistent* about — the same tool results coul
 a slightly different score on two different runs, since nothing about token-by-token
 generation guarantees the same arithmetic twice.
 
-**Planned improvement** (see the new step in `docs/development-plan.md`): move score
-calculation into Ruby, computed directly from the tool results the agent already
-collected (FAQ content found → +15, structured data present → +15, etc.), and leave the
-model responsible only for what it's actually good at — explaining the gaps in plain
-language. The general rule this suggests: if a step has one deterministic correct
-answer, do it in code; if a step requires judgment over unstructured content, that's
-where the model earns its keep.
+This has since been built (Step 7, `docs/development-plan.md`) — score calculation now
+lives in Ruby, computed from the tool results the agent already collected, and the
+model is only ever asked for judgment it's actually suited to give. The general rule
+this suggests: if a step has one deterministic correct answer, do it in code; if a step
+requires judgment over unstructured content, that's where the model earns its keep. The
+next section covers the two mechanisms that made the split possible.
+
+## Hooks and structured output: how the score actually left the model
+
+Two `little_ghost` mechanisms made Step 7 possible, and both are patterns that apply
+well beyond scoring.
+
+**Lifecycle hooks.** `little_ghost` fires callbacks at points in the agent's tool
+loop — `before_tool`, `after_tool`, `before_model`, `after_model`, and more.
+`GeoAuditAgent` uses `after_tool` to copy every tool's raw Ruby return value into
+`context.state`, a plain hash that travels with the run and survives to the end of it
+as `run.result.state`. This is the general pattern for pulling data *out* of an agent
+run without re-parsing the conversation afterward: hook into the moment the data
+exists, stash it somewhere durable, and read it back once the run finishes.
+
+**Structured output (`result_schema`).** By default, an agent's final answer is free
+text. `result_schema` changes that: it forces the final message into a strict JSON
+shape, validated against a schema, with one automatic repair attempt if the model's
+first try doesn't fit. `GeoAuditAgent` uses this to get back exactly three ratings
+(`poor`/`fair`/`good` plus a one-sentence reason) instead of parsing a score out of a
+paragraph of prose. The more general lesson: whenever Ruby needs to *do something*
+with a model's output beyond displaying it, structured output beats asking nicely for
+a specific format and hoping the text stays parseable.
+
+**Two conversations, not one.** `GeoAudit::Score` reads `run.result.state` and
+`run.result.structured_result.value` and computes the final number in plain Ruby —
+that's the deterministic half. Explaining that number in readable prose still needs a
+model, but not *this* model's conversation, and no tools at all. So it's a second,
+independent call (`GeoAudit::GapsExplanation`, following the same plain
+`LittleGhost.generate` pattern as `GeoAudit::CitationCheck` rather than a full second
+`Agent`) that receives the finished score rendered as plain text and writes 2-3
+sentences about it. It has no memory of the tool-calling run and no way to change the
+number — it can only describe what Ruby already decided. The score itself is
+reproducible for the same tool results and ratings every time; only the wording of its
+explanation can vary between runs, which is a contained, acceptable kind of
+nondeterminism compared to letting a model do the arithmetic itself.
 
 ## What a "trace" looks like
 
