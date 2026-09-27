@@ -78,8 +78,8 @@ Branch: `check-ai-citation-tool`
 - **Concept focus:** the hardest/most novel tool — this is the one that's actually
   unique to "AEO" rather than dressed-up SEO. Expect this step to take longest.
 
-## ⬜ Step 6 — GeoAuditAgent (wiring it all together)
-Branch: `product-geo-agent`
+## ✅ Step 6 — GeoAuditAgent (wiring it all together)
+Branch: `product-geo-agent` (PR #10, merged)
 - `app/agents/geo_audit_agent.rb` — the `little_ghost` agent itself. Named
   `GeoAuditAgent`, not `ProductGeoAgent`, because `config/application.rb` already
   defines a top-level `ProductGeoAgent` module (Rails' own app namespace, derived
@@ -87,9 +87,11 @@ Branch: `product-geo-agent`
   loading the agent file if the names collide, so the class needs a different name.
 - System prompt encoding the strategy (start with get_product_data, judge depth,
   FAQ fallback logic, citation check last, summarize with score + gaps)
-- Spec: integration-style spec mocking all 5 tools, asserting the agent calls them
-  in the expected conditional order for a few scenarios (thin product vs. strong
-  product, FAQ found on first try vs. fallback needed)
+- Spec: `geo_audit_agent_spec.rb` covers wiring only (tools registered, system prompt
+  content) — mocking multi-turn model behavior turned out to only prove Ruby handles a
+  fake response correctly, never that the real model would choose that order, so that
+  question is answered by `geo_audit_agent_live_spec.rb` (`:live`, opt-in) instead. See
+  "Specs vs. evals" in `docs/agent-concepts.md`.
 - **Concept focus:** this is the first time you'll actually *watch* the reasoning
   loop happen end-to-end — the payoff step for everything built so far
 
