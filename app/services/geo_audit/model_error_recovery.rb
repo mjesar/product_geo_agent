@@ -28,6 +28,7 @@ module GeoAudit
       delay = @policy.delay_for(payload[:error], attempt:)
       return nil unless delay
 
+      Usage.current_tracker&.record_retry!(:agent)
       @sleeper.call(delay)
       LittleGhost::Support::Callbacks.replace({ request: payload[:request] })
     end
