@@ -31,4 +31,6 @@ class GeoAuditAgent < LittleGhost::Agent
   after_tool do |payload, context:|
     context.state[payload[:tool_use].name] = payload[:result].value
   end
+
+  after_model_error GeoAudit::ModelErrorRecovery.new
 end

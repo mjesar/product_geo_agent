@@ -9,6 +9,10 @@ RSpec.describe GeoAudit::CitationCheck do
     response
   end
 
+  def http_error(status)
+    LittleGhost::Providers::HTTPError.new("boom", status: status, body: "{}")
+  end
+
   describe "#call" do
     context "when the product is mentioned in the response" do
       it "returns mentioned true along with the question and full response" do
@@ -51,6 +55,22 @@ RSpec.describe GeoAudit::CitationCheck do
         model: GeoAudit::CitationCheck::MODEL,
         messages: [ { role: :user, content: "What's a good wool socks you'd recommend?" } ]
       )
+    end
+
+    it "retries a transient provider error before giving up" do
+      retrier = GeoAudit::Retrier.new(sleeper: ->(_seconds) {})
+      citation_check = described_class.new(retrier: retrier)
+      response = instance_double(LittleGhost::RunResult, text: "Cozy Wool Socks are great.")
+      attempts = 0
+      allow(LittleGhost).to receive(:generate) do
+        attempts += 1
+        attempts == 1 ? raise(http_error(503)) : response
+      end
+
+      result = citation_check.call(product_title: "Cozy Wool Socks", category: "wool socks")
+
+      expect(result[:mentioned]).to eq(true)
+      expect(attempts).to eq(2)
     end
   end
 end

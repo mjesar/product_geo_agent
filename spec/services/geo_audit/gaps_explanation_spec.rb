@@ -11,6 +11,10 @@ RSpec.describe GeoAudit::GapsExplanation do
     GeoAudit::Score::Result.new(total: total, items: items)
   end
 
+  def http_error(status)
+    LittleGhost::Providers::HTTPError.new("boom", status: status, body: "{}")
+  end
+
   def build_item(key:, label:, weight:, points:, detail:)
     GeoAudit::Score::Item.new(key: key, label: label, weight: weight, points: points, detail: detail)
   end
@@ -58,6 +62,22 @@ RSpec.describe GeoAudit::GapsExplanation do
       expect(LittleGhost).to have_received(:generate).with(
         hash_including(messages: [ hash_including(content: a_string_including("never recalculate it")) ])
       )
+    end
+
+    it "retries a transient provider error before giving up" do
+      retrier = GeoAudit::Retrier.new(sleeper: ->(_seconds) {})
+      gaps_explanation = described_class.new(retrier: retrier)
+      response = instance_double(LittleGhost::RunResult, text: "Add a FAQ page.")
+      attempts = 0
+      allow(LittleGhost).to receive(:generate) do
+        attempts += 1
+        attempts == 1 ? raise(http_error(503)) : response
+      end
+
+      result = gaps_explanation.call(score: build_score(total: 62))
+
+      expect(result).to eq("Add a FAQ page.")
+      expect(attempts).to eq(2)
     end
   end
 end

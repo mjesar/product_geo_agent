@@ -102,15 +102,16 @@ System prompt strategy (not a fixed pipeline):
   cases (empty FAQ, no structured data, no citation found) are the actual point of
   this project's scoring logic.
 
-## Observability & evals (planned — see `docs/development-plan.md` steps 9-10)
+## Observability & evals (planned — see `docs/development-plan.md` step 8.4 and step 10)
 RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
 They prove nothing about two other things that matter for an agentic system, and both
 are real gaps here, not just nice-to-haves:
 - **Observability** — right now a completed audit run only shows the final score.
   There's no visibility into which tools the agent called, in what order, with what
-  arguments, how long each took, or where it failed. Planned fix: log each tool call
-  to Rails' logger (or a structured log file) so a run produces a readable trace,
-  useful for debugging during development, not just after the fact.
+  arguments, how long each took, or where it failed. Planned fix (step 8.4,
+  `audit-visibility`): a reporter object that every part of an audit announces events
+  to, so a run produces a readable live trace, useful for debugging during
+  development and for showing the agent's actual behavior, not just the final score.
 - **Evals** — RSpec can't tell you whether the agent's *judgment* is any good (is the
   score right, are the flagged gaps the actual gaps), only whether the code ran
   without crashing. Planned fix: a small hand-scored ground-truth set (5-8 real
@@ -138,8 +139,21 @@ are real gaps here, not just nice-to-haves:
   to exercise both branches of the fallback logic
 - `check_ai_citation` will almost always return "not mentioned" for sandbox/unknown
   products — that's the correct, honest result, not a bug
-- Gemini free tier rate limits mean each audit costs several requests (one per tool
-  round-trip) — don't stress-test it
+- **Gemini free tier rate limits**: one audit makes roughly 7-8 requests (5-6 agent
+  turns, 1 for the citation tool's own call, 1 for the gaps explanation), and hit 9
+  in one minute during testing. As of 2026-09-28, `gemini-flash-lite-latest` (mapped
+  to "Gemini 3.5 Flash Lite" in Google AI Studio) was rate-limited at 15
+  requests/minute, 500/day, 250K tokens/minute on the free tier — requests are the
+  binding constraint, not tokens. These numbers change; check
+  https://aistudio.google.com/rate-limit instead of trusting this note.
+  `little_ghost`'s Gemini adapter has no built-in retry (confirmed by reading its
+  source — other adapters like OpenAI-compatible do), so `GeoAudit::RetryPolicy`
+  retries 503s (5s/15s/30s backoff) and 429s (15s/30s/60s) ourselves, both for the
+  agent's own turns (`GeoAudit::ModelErrorRecovery`, via `after_model_error`) and the
+  two bare `LittleGhost.generate` calls (`GeoAudit::Retrier`). See step 8.2 in
+  `docs/development-plan.md`. A real 429's error body hasn't been seen yet (only 503s
+  so far) — if one shows up, check whether it carries a structured `retryDelay`
+  field worth parsing instead of the flat backoff.
 - No delivery-date or review-aggregation checks in v1 (Storefront API has no universal
   fields for these) — noted as a possible future `check_fulfillment_clarity` tool
 - **Gemini model availability**: `little_ghost`'s own docs example uses
