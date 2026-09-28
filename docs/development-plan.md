@@ -125,36 +125,103 @@ Branch: `deterministic-scoring` (PR #11, merged)
   code, judgment belongs in the model. See the "System prompts" section in
   `docs/agent-concepts.md`, plus its new section on hooks and structured output.
 
-## ⬜ Step 8 — CLI entrypoint
-Branch: `cli-entrypoint`
-- `bin/audit` — takes a product handle, runs `GeoAuditAgent`, prints the trace +
-  final score readably
-- Spec (if reasonably testable) or manual verification against the sandbox store
-- **Concept focus:** none new — this is packaging, not agent concepts
+## ✅ Step 8 — CLI entrypoint + observability
+`bin/audit` grew from a minimal wrapper into a real CLI with live visibility into
+what the agent is doing, retries, usage tracking, and history — enough of a scope
+expansion that it's tracked as sub-steps, each its own branch/PR.
+
+### ✅ Step 8.0 — minimal entrypoint
+Branch: `cli-entrypoint` (PR #12, merged)
+- `bin/audit HANDLE` — validates the handle argument, runs `GeoAudit::Auditor`,
+  catches a failed run cleanly (prints the reason, exits non-zero) instead of a raw
+  Ruby backtrace
+- Deliberately minimal — no output yet on the success path; that's 8.4's job
+
+### ✅ Step 8.1 — central model settings
+Branch: `central-model-settings` (merged)
+- `app/services/geo_audit/models.rb` — `GeoAudit::Models.for(role)`, one place for
+  model names by role (`agent`, `citation`, `explanation`, `chat` for later), instead
+  of the same literal string hardcoded in three files
+- `GeoAuditAgent`, `CitationCheck`, `GapsExplanation` all read their model through it
+- **Concept focus:** none new — this is upkeep, but the kind that pays off the next
+  time Gemini retires a model name
+
+### 🔶 Step 8.2 — retry with backoff
+Branch: `retry-with-backoff`
+- `little_ghost`'s Gemini adapter has no retry/backoff logic at all (confirmed by
+  reading the adapter source — other adapters like OpenAI-compatible and Bedrock do,
+  Gemini doesn't), so this is entirely our own
+- `app/services/geo_audit/retry_policy.rb` — pure decision logic: given an error and
+  an attempt number, returns a delay in seconds or `nil`. Only retries
+  `LittleGhost::Providers::HTTPError` with status `503` (5s/15s/30s) or `429`
+  (15s/30s/60s); everything else fails immediately
+- `app/services/geo_audit/retrier.rb` — wraps a block, used by `CitationCheck` and
+  `GapsExplanation`'s bare `LittleGhost.generate` calls, which don't go through any
+  Agent hook. Takes an injectable `sleeper:` so specs never actually wait
+- `app/services/geo_audit/model_error_recovery.rb` — a callable registered as
+  `GeoAuditAgent.after_model_error`, for the agent's own reasoning-loop calls.
+  Returning `LittleGhost::Support::Callbacks.replace(request: ...)` is what actually
+  triggers a retry (mutating the payload hash does nothing — confirmed by reading
+  `Support::Callbacks`); little_ghost hard-caps this at 3 recovery attempts total,
+  non-configurable
+- **Concept focus:** two separate retry paths were needed, not one, because
+  `after_model_error` (Agent-turn calls) and a bare `.generate` call (no Agent, no
+  hooks) are fundamentally different integration points. Also a real Ruby gotcha hit
+  while building `ModelErrorRecovery`: `context.state[k] ||= {}` evaluates to the
+  plain `{}` literal, not the `DataMap`-normalized value actually stored, so
+  mutating that expression's result silently writes to an orphaned hash instead of
+  the real per-run state — see the comment in `model_error_recovery.rb`
+
+### ⬜ Step 8.3 — usage counting
+Branch: `usage-counting`
+- Count Gemini calls, input/output tokens, and elapsed time per audit, including
+  the agent run, the explanation call, and any retries
+- Add it to `Auditor::Result` and print it as the CLI's last line
+
+### ⬜ Step 8.4 — visibility: events + terminal output
+Branch: `audit-visibility`
+- Everything that does something announces an event to a reporter object (not
+  `ActiveSupport::Notifications` — little_ghost already exposes the right hook
+  points, so a plain reporter interface is simpler); a terminal printer, a
+  `--trace` file writer, and later a database saver each subscribe independently
+- Levels: default (one line per event), `--verbose` (full tool inputs/results),
+  `--trace` (raw request/response to a file, redacted)
+- On failure: print the failed step and reason, then partial results from
+  `context.state`, then exit cleanly, no backtrace
+- This is what the old "observability" step (formerly Step 10) meant — folded in
+  here instead of staying separate, since it's the same work
+
+### ⬜ Step 8.5 — product list
+Branch: `product-list`
+- A Storefront query for handle + title with pagination, no Gemini involved
+- `bin/audit list` prints it; becomes a tool for chat mode later
+
+### ⬜ Step 8.6 — saving results + history
+Branch: `audit-history`
+- Postgres table for audit runs (handle, score, breakdown, explanation, usage,
+  redacted trace, timestamp); `bin/audit history` reads it back
+
+### ⬜ Step 8.7 — interactive menu
+Branch: `interactive-menu`
+- Pick a product from a numbered menu, watch the audit run live, browse history
+- Plain `gets`-based menu by default; a gem like `tty-prompt` was considered but is
+  5+ years stale with no verified compatibility against current Ruby, so it's not
+  the default
+
+Chat mode (typed English routed to a command) is a later, unscheduled idea — the
+CLI commands built in 8.5-8.7 would become its tools.
 
 ## ⬜ Step 9 — Real sandbox run + scoring calibration
-No new branch necessarily — likely small fixup commits/PRs as needed
+No new branch necessarily — likely small fixup commits/PRs as needed. Runs after
+Step 8 completes, since calibration is much easier to watch with 8.4's live output
+in hand than by guessing from a silent final score.
 - Run against 3-5 real sandbox products
 - Sanity-check the scoring weights actually produce sensible-feeling results
 - Add FAQ content to the sandbox store manually (per the known-limitations note in
   `CLAUDE.md`) so both FAQ branches get exercised in a real run, not just in specs
 - Update `docs/agent-concepts.md` with what was learned from watching real traces
 
-## ⬜ Step 10 — Observability: instrument the reasoning loop
-Branch: `agent-observability`
-- Log each tool call the agent makes — tool name, arguments, duration,
-  success/failure — to Rails' logger or a structured log file, so a completed audit
-  run produces a readable trace of what happened and how long each step took, not
-  just the final score
-- Needs the full agent (step 6) to exist first, since there's no reasoning loop to
-  instrument before then
-- Should earn its keep during development itself (debugging why the agent picked a
-  particular path or stalled on a tool call), not just be a resume line
-- **Concept focus:** observability for agentic systems — without this, a reasoning
-  loop is a black box; structured logging turns "the agent didn't answer" into
-  "get_product_data timed out after 8s" as a diagnosable trace, not a guess
-
-## ⬜ Step 11 — Eval harness: does the agent's judgment hold up?
+## ⬜ Step 10 — Eval harness: does the agent's judgment hold up?
 Branch: `eval-harness`
 - Pick 5-8 real products from the sandbox store, hand-score what each one *should*
   get (expected score + expected gaps flagged), then run the real agent against them
@@ -162,7 +229,7 @@ Branch: `eval-harness`
 - Lives in `spec/evals/` or `docs/evals.md` — exact shape TBD once we see it; may not
   fit neatly into RSpec's assert-and-pass model since eval output is closer to
   "how far off was this" than "pass/fail"
-- Needs the full agent (step 6) and ideally the observability trace (step 10) to make
+- Needs the full agent (step 6) and ideally the visibility work (step 8.4) to make
   failures diagnosable, not just visible
 - **Concept focus:** evals vs. tests — RSpec specs prove the code doesn't crash and
   returns the right shape; they say nothing about whether the agent's actual
