@@ -2,7 +2,7 @@ require "erb"
 
 module GeoAudit
   class GapsExplanation
-    MODEL = "gemini:gemini-flash-lite-latest".freeze
+    MODEL = Models.for(:explanation)
     PROMPT_PATH = Rails.root.join("app/prompts/geo_audit/gaps_explanation.erb")
 
     def call(score:)

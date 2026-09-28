@@ -1,6 +1,6 @@
 module GeoAudit
   class CitationCheck
-    MODEL = "gemini:gemini-flash-lite-latest".freeze
+    MODEL = Models.for(:citation)
 
     def call(product_title:, category:)
       question = "What's a good #{category} you'd recommend?"
