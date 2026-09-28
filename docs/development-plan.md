@@ -95,8 +95,8 @@ Branch: `product-geo-agent` (PR #10, merged)
 - **Concept focus:** this is the first time you'll actually *watch* the reasoning
   loop happen end-to-end — the payoff step for everything built so far
 
-## 🔶 Step 7 — Move scoring out of the model
-Branch: `deterministic-scoring`
+## ✅ Step 7 — Move scoring out of the model
+Branch: `deterministic-scoring` (PR #11, merged)
 - The system prompt no longer asks the model to calculate a score. Instead,
   `GeoAuditAgent` declares a `result_schema` that forces its final answer into three
   categorical ratings (`description_quality`, `buyer_questions_answered`,

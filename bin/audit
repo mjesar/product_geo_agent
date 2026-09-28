@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+require_relative "../config/environment"
+
+handle = ARGV[0]
+if handle.nil?
+  warn "usage: bin/audit PRODUCT_HANDLE"
+  exit 1
+end
+
+begin
+  result = GeoAudit::Auditor.new.call(handle:)
+rescue => e
+  warn "audit failed: #{e.message}"
+  exit 1
+end
