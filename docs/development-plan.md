@@ -146,8 +146,8 @@ Branch: `central-model-settings` (merged)
 - **Concept focus:** none new — this is upkeep, but the kind that pays off the next
   time Gemini retires a model name
 
-### 🔶 Step 8.2 — retry with backoff
-Branch: `retry-with-backoff`
+### ✅ Step 8.2 — retry with backoff
+Branch: `retry-with-backoff` (PR #14, merged)
 - `little_ghost`'s Gemini adapter has no retry/backoff logic at all (confirmed by
   reading the adapter source — other adapters like OpenAI-compatible and Bedrock do,
   Gemini doesn't), so this is entirely our own
@@ -172,11 +172,29 @@ Branch: `retry-with-backoff`
   mutating that expression's result silently writes to an orphaned hash instead of
   the real per-run state — see the comment in `model_error_recovery.rb`
 
-### ⬜ Step 8.3 — usage counting
-Branch: `usage-counting`
-- Count Gemini calls, input/output tokens, and elapsed time per audit, including
-  the agent run, the explanation call, and any retries
-- Add it to `Auditor::Result` and print it as the CLI's last line
+### ✅ Step 8.3 — usage counting
+Committed directly to `master` (no branch/PR this time — a process slip, not worth
+unwinding since the commit itself is solid and tested)
+- `app/services/geo_audit/usage.rb` — `Usage::Tracker`/`Snapshot`/`PartSnapshot`,
+  broken down by part (`agent`, `citation`, `explanation`) with calls, retries, and
+  tokens tracked separately, plus a combined total
+- `app/services/geo_audit/model_call_counter.rb` — a new `before_model` hook
+  counting every agent-turn attempt, including retries
+- `Retrier` gained optional `tracker:`/`part:`, recording calls/retries/tokens for
+  the two bare `.generate` paths by reading the raw response's usage before
+  `CitationCheck`/`GapsExplanation` reduce it down to text — no return-shape changes
+  needed on either
+- `Auditor` times the whole call with an injectable monotonic clock and reads
+  `run.usage` directly (confirmed populated even when a run fails, unlike
+  `run.result`, which is `nil` on failure) into the `agent` part
+- Added to `Auditor::Result` as `usage:`/`elapsed_seconds:` — not printed yet,
+  that's 8.4's job
+- **Concept focus:** `GeoAuditAgent`'s hooks are class-level singletons registered
+  once and reused across every run, and `CitationCheck` is only ever instantiated by
+  little_ghost itself (inside its tool wrapper), not by our own code — neither can
+  take a normal per-call constructor argument. Both reach the current audit's
+  tracker through a `Thread.current` slot `Auditor` sets before the run and clears
+  in an `ensure`, safe only because `bin/audit` runs one audit per process at a time
 
 ### ⬜ Step 8.4 — visibility: events + terminal output
 Branch: `audit-visibility`
