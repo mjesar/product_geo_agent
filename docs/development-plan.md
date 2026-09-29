@@ -3,7 +3,7 @@
 Step-by-step build plan for `ProductGeoAgent`. Each step below = one branch = one PR.
 Don't start a step's branch until the previous PR is merged into `master`.
 
-Status key: ⬜ not started · 🔶 in progress · ✅ merged
+Status key: ⬜ not started · 🔶 in progress · ✅ merged · ⏭️ skipped (deliberate)
 
 ---
 
@@ -127,8 +127,9 @@ Branch: `deterministic-scoring` (PR #11, merged)
 
 ## ✅ Step 8 — CLI entrypoint + observability
 `bin/audit` grew from a minimal wrapper into a real CLI with live visibility into
-what the agent is doing, retries, usage tracking, and history — enough of a scope
-expansion that it's tracked as sub-steps, each its own branch/PR.
+what the agent is doing, retries, and usage tracking — enough of a scope expansion
+that it's tracked as sub-steps, each its own branch/PR. Product listing, run history,
+and an interactive menu (8.5-8.7) were deliberately skipped, see below.
 
 ### ✅ Step 8.0 — minimal entrypoint
 Branch: `cli-entrypoint` (PR #12, merged)
@@ -236,25 +237,34 @@ Branch: `audit-visibility`
   string, so `Terminal` doesn't have to string-match "answered without a tool call" to
   know whether a turn chose a tool
 
-### ⬜ Step 8.5 — product list
-Branch: `product-list`
-- A Storefront query for handle + title with pagination, no Gemini involved
-- `bin/audit list` prints it; becomes a tool for chat mode later
+### ⏭️ Step 8.5 — product list — skipped
+Branch would have been: `product-list`
+- Would have been a Storefront query for handle + title with pagination, no Gemini
+  involved; `bin/audit list` printing it, becoming a tool for chat mode later
 
-### ⬜ Step 8.6 — saving results + history
-Branch: `audit-history`
-- Postgres table for audit runs (handle, score, breakdown, explanation, usage,
-  redacted trace, timestamp); `bin/audit history` reads it back
+### ⏭️ Step 8.6 — saving results + history — skipped
+Branch would have been: `audit-history`
+- Would have been a Postgres table for audit runs (handle, score, breakdown,
+  explanation, usage, redacted trace, timestamp); `bin/audit history` reading it back
 
-### ⬜ Step 8.7 — interactive menu
-Branch: `interactive-menu`
-- Pick a product from a numbered menu, watch the audit run live, browse history
-- Plain `gets`-based menu by default; a gem like `tty-prompt` was considered but is
-  5+ years stale with no verified compatibility against current Ruby, so it's not
-  the default
+### ⏭️ Step 8.7 — interactive menu — skipped
+Branch would have been: `interactive-menu`
+- Would have been a numbered menu to pick a product, watch the audit run live, and
+  browse history — depended on 8.5 and 8.6 existing, so skipping those made this
+  moot too
 
-Chat mode (typed English routed to a command) is a later, unscheduled idea — the
-CLI commands built in 8.5-8.7 would become its tools.
+**Why skipped:** none of these three teach a new agent-development concept — they're
+the only steps in this plan with no "Concept focus" note, pure CLI/CRUD/UX work
+(a paginated query, a database table, a `gets` menu). Nothing downstream needs them
+either: Step 9 only needs a few real product handles, gettable from the Shopify admin
+directly, and Step 10's hand-scored expectations were already planned to live in a
+file (`spec/evals/` or `docs/evals.md`), not a database. For a project whose point is
+learning agent concepts and producing a portfolio piece, not shipping a full internal
+tool, the cost (no product browsing, no persisted run history, no interactive menu)
+is worth it to spend the remaining time on Steps 9 and 10 instead, which actually are
+agent-concept work. Chat mode (typed English routed to a command) was floated as a
+later, unscheduled idea that would have used 8.5-8.7's CLI commands as its own tools
+— shelved along with them, not a loss since it was never committed to.
 
 ## ⬜ Step 9 — Real sandbox run + scoring calibration
 No new branch necessarily — likely small fixup commits/PRs as needed. Runs after
