@@ -4,10 +4,11 @@ require_relative "../config/environment"
 
 options = { verbose: false, trace: nil }
 parser = OptionParser.new do |opts|
-  opts.banner = "usage: bin/audit [--verbose] [--trace[=PATH]] PRODUCT_HANDLE"
+  opts.banner = "usage: bin/audit [--verbose] [--trace] [--trace-path=PATH] PRODUCT_HANDLE"
   opts.on("--verbose", "print full tool inputs and results") { options[:verbose] = true }
-  opts.on("--trace [PATH]", "write a redacted raw request/response trace (default: traces/)") do |path|
-    options[:trace] = path || :default
+  opts.on("--trace", "write a redacted raw request/response trace to traces/") { options[:trace] = true }
+  opts.on("--trace-path=PATH", "write the trace to PATH instead of the default traces/ location") do |path|
+    options[:trace] = path
   end
 end
 parser.parse!(ARGV)
@@ -20,8 +21,8 @@ end
 
 trace_path =
   case options[:trace]
-  when nil then nil
-  when :default then Rails.root.join("traces", "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}-#{handle}.jsonl").to_s
+  when nil, false then nil
+  when true then Rails.root.join("traces", "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}-#{handle}.jsonl").to_s
   else options[:trace]
   end
 
