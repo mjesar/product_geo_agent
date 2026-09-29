@@ -17,14 +17,23 @@ RSpec.describe GeoAudit::ModelCallLogger do
   end
 
   it "announces the model's tool choice, with a duration when a matching start time was recorded" do
-    GeoAudit::ModelCallCounter.new.call({ turn: 1 }, context: context)
+    request = instance_double(LittleGhost::ModelRequest, messages: [])
+    GeoAudit::ModelCallCounter.new.call({ turn: 1, request: request }, context: context)
     tool_use = LittleGhost::Content::ToolUse.new(id: "call-1", name: "get_product_data", input: {})
 
     described_class.new.call({ turn: 1, response: response_with(tool_use) }, context: context)
 
     expect(reporter).to have_received(:event).with(
-      :agent_call_finished, turn: 1, duration: (be >= 0), decision: "chose tool get_product_data"
+      :agent_call_finished, hash_including(turn: 1, duration: (be >= 0), decision: "chose tool get_product_data")
     )
+  end
+
+  it "announces the raw response, for a trace reporter to write out" do
+    response = response_with(LittleGhost::Content::ToolUse.new(id: "call-1", name: "get_product_data", input: {}))
+
+    described_class.new.call({ turn: 1, response: response }, context: context)
+
+    expect(reporter).to have_received(:event).with(:agent_call_finished, hash_including(response: response.message.to_h))
   end
 
   it "joins multiple tool choices from the same turn" do

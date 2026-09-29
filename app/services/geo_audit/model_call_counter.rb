@@ -9,7 +9,9 @@ module GeoAudit
       context.state[STARTED_AT_KEY] ||= {}
       context.state[STARTED_AT_KEY][payload[:turn].to_s] = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-      current_audit.reporter.event(:agent_call_started, turn: payload[:turn])
+      current_audit.reporter.event(
+        :agent_call_started, turn: payload[:turn], request: payload[:request].messages.map(&:to_h)
+      )
       nil
     end
   end

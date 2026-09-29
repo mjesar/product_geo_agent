@@ -6,7 +6,8 @@ module GeoAudit
         :agent_call_finished,
         turn: payload[:turn],
         duration: duration_for(payload[:turn], context),
-        decision: decision_for(payload[:response])
+        decision: decision_for(payload[:response]),
+        response: payload[:response].message.to_h
       )
       nil
     end
