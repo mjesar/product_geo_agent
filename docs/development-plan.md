@@ -196,7 +196,7 @@ unwinding since the commit itself is solid and tested)
   tracker through a `Thread.current` slot `Auditor` sets before the run and clears
   in an `ensure`, safe only because `bin/audit` runs one audit per process at a time
 
-### 🔶 Step 8.4 — visibility: events + terminal output
+### ✅ Step 8.4 — visibility: events + terminal output
 Branch: `audit-visibility`
 - Everything that does something announces an event to a reporter object (not
   `ActiveSupport::Notifications` — little_ghost already exposes the right hook
@@ -221,6 +221,20 @@ Branch: `audit-visibility`
   live, a nonexistent-handle smoke test made 4 real calls before being killed. Two
   options, not decided yet: teach the system prompt to stop early on a not-found
   result, or have `Auditor` check the handle resolves before invoking the agent at all
+- **Follow-up (🔶 in progress, branch `reporter-redesign`, not its own numbered step)**:
+  the first real run against `Terminal` exposed the actual problem with the original
+  design — `tool_finished`'s `summary:` was just `value.to_s`, the entire raw Ruby
+  hash stringified, so every tool line wrapped across several lines of unreadable
+  JSON-looking text instead of being an actual one-line summary. Separately, `Auditor`
+  computed the gaps explanation but never told the reporter about it, so the one thing
+  that explains *why* a product scored what it did was invisible on every run.
+  Reworked `Reporter::Terminal` into a cleaner "Thinking... / ✓ tool → summary" view
+  with ANSI color (auto-detected via `io.tty?`, off when piped or in specs), added
+  `GeoAudit::ToolSummary` (one real human sentence per tool, keyed by tool name) to
+  replace the raw dump, and added the missing `:explanation` event. `ModelCallLogger`
+  also now emits `tool_names:` as a plain array alongside the existing `decision:`
+  string, so `Terminal` doesn't have to string-match "answered without a tool call" to
+  know whether a turn chose a tool
 
 ### ⬜ Step 8.5 — product list
 Branch: `product-list`

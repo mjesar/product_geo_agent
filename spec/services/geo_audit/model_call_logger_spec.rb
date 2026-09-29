@@ -62,4 +62,23 @@ RSpec.describe GeoAudit::ModelCallLogger do
 
     expect(reporter).to have_received(:event).with(:agent_call_finished, hash_including(duration: nil))
   end
+
+  it "announces the tool names as a plain array, for a reporter that doesn't want to parse the sentence" do
+    tool_uses = [
+      LittleGhost::Content::ToolUse.new(id: "call-1", name: "get_product_data", input: {}),
+      LittleGhost::Content::ToolUse.new(id: "call-2", name: "check_faq_page", input: {})
+    ]
+
+    described_class.new.call({ turn: 1, response: response_with(*tool_uses) }, context: context)
+
+    expect(reporter).to have_received(:event).with(
+      :agent_call_finished, hash_including(tool_names: [ "get_product_data", "check_faq_page" ])
+    )
+  end
+
+  it "announces an empty tool_names array for a final answer with no tool call" do
+    described_class.new.call({ turn: 1, response: response_with("all done") }, context: context)
+
+    expect(reporter).to have_received(:event).with(:agent_call_finished, hash_including(tool_names: []))
+  end
 end

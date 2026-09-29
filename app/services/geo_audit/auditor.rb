@@ -30,6 +30,7 @@ module GeoAudit
       @reporter.event(:score_computed, result: score)
 
       explanation = GapsExplanation.new(retrier: Retrier.new(tracker: tracker, part: :explanation)).call(score: score)
+      @reporter.event(:explanation, text: explanation)
 
       usage = tracker.snapshot
       elapsed_seconds = @clock.call - started_at
