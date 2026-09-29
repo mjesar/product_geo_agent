@@ -144,7 +144,25 @@ RSpec.describe GeoAudit::Auditor do
 
       expect { described_class.new(reporter: reporter).call(handle: "cozy-wool-socks") }.to raise_error(StandardError)
 
-      expect(reporter).to have_received(:event).with(:failure, step: "agent run", reason: "Gemini rate limited")
+      expect(reporter).to have_received(:event).with(
+        :failure, step: "agent run", reason: "Gemini rate limited", partial_results: {}
+      )
+    end
+
+    it "includes any tool results collected before the run failed" do
+      reporter = instance_double(GeoAudit::Reporter::Null, event: nil)
+      run = failed_run(outcome: "failed", error: StandardError.new("Gemini rate limited"))
+      allow(GeoAuditAgent).to receive(:ask) do
+        GeoAudit::CurrentAudit.current.record_tool_result("get_product_data", { title: "Cozy Wool Socks" })
+        run
+      end
+
+      expect { described_class.new(reporter: reporter).call(handle: "cozy-wool-socks") }.to raise_error(StandardError)
+
+      expect(reporter).to have_received(:event).with(
+        :failure, step: "agent run", reason: "Gemini rate limited",
+        partial_results: { "get_product_data" => { title: "Cozy Wool Socks" } }
+      )
     end
   end
 end

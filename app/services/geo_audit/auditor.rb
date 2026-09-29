@@ -22,7 +22,7 @@ module GeoAudit
 
       unless run.completed?
         reason = run.error&.message
-        @reporter.event(:failure, step: "agent run", reason: reason)
+        @reporter.event(:failure, step: "agent run", reason: reason, partial_results: current_audit.tool_results)
         raise "GeoAuditAgent run did not complete (#{run.outcome}): #{reason}"
       end
 
