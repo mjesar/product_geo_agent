@@ -45,6 +45,31 @@ RSpec.describe GeoAudit::Auditor do
       )
     end
 
+    it "sets the current audit before the run and clears it afterward" do
+      current_audit_during_run = nil
+      allow(GeoAuditAgent).to receive(:ask) do
+        current_audit_during_run = GeoAudit::CurrentAudit.current
+        completed_run(state: tool_results, ratings: ratings)
+      end
+      allow(GeoAudit::Score).to receive(:new).and_return(instance_double(GeoAudit::Score, call: score_result))
+      allow(GeoAudit::GapsExplanation).to receive(:new).and_return(
+        instance_double(GeoAudit::GapsExplanation, call: "Add a FAQ page.")
+      )
+
+      described_class.new.call(handle: "cozy-wool-socks")
+
+      expect(current_audit_during_run).to be_a(GeoAudit::CurrentAudit)
+      expect { GeoAudit::CurrentAudit.current }.to raise_error(GeoAudit::CurrentAudit::MissingError)
+    end
+
+    it "clears the current audit even when the run did not complete" do
+      run = failed_run(outcome: "failed", error: StandardError.new("Gemini rate limited"))
+      allow(GeoAuditAgent).to receive(:ask).and_return(run)
+
+      expect { described_class.new.call(handle: "cozy-wool-socks") }.to raise_error(StandardError)
+      expect { GeoAudit::CurrentAudit.current }.to raise_error(GeoAudit::CurrentAudit::MissingError)
+    end
+
     it "scores the run's tool results and ratings" do
       stub_collaborators(run: completed_run(state: tool_results, ratings: ratings))
 
@@ -84,18 +109,23 @@ RSpec.describe GeoAudit::Auditor do
       # calls/retries are 0 here because GeoAuditAgent.ask is stubbed, so the real
       # before_model/ModelErrorRecovery hooks never run — only Auditor's own direct
       # read of run.usage is under test in this spec, not the full hook wiring
-      # (that's covered live in geo_audit_agent_live_spec.rb).
+      # (that's covered by the real-hook-path spec).
       expect(result.usage.agent).to eq(
         GeoAudit::Usage::PartSnapshot.new(calls: 0, retries: 0, input_tokens: 120, output_tokens: 30)
       )
     end
 
-    it "clears the current usage tracker after a successful call" do
+    it "announces the start, the computed score, and the final usage summary to the reporter" do
+      reporter = instance_double(GeoAudit::Reporter::Null, event: nil)
       stub_collaborators(run: completed_run(state: tool_results, ratings: ratings))
 
-      described_class.new.call(handle: "cozy-wool-socks")
+      described_class.new(clock: clock, reporter: reporter).call(handle: "cozy-wool-socks")
 
-      expect(GeoAudit::Usage.current_tracker).to be_nil
+      expect(reporter).to have_received(:event).with(:start, handle: "cozy-wool-socks", model: GeoAuditAgent.model)
+      expect(reporter).to have_received(:event).with(:score_computed, result: score_result)
+      expect(reporter).to have_received(:event).with(
+        :usage_summary, snapshot: instance_of(GeoAudit::Usage::Snapshot), elapsed: 4.5
+      )
     end
 
     it "raises a clear error when the run did not complete" do
@@ -107,12 +137,14 @@ RSpec.describe GeoAudit::Auditor do
       )
     end
 
-    it "clears the current usage tracker even when the run did not complete" do
+    it "announces the failure to the reporter before raising" do
+      reporter = instance_double(GeoAudit::Reporter::Null, event: nil)
       run = failed_run(outcome: "failed", error: StandardError.new("Gemini rate limited"))
       allow(GeoAuditAgent).to receive(:ask).and_return(run)
 
-      expect { described_class.new.call(handle: "cozy-wool-socks") }.to raise_error(StandardError)
-      expect(GeoAudit::Usage.current_tracker).to be_nil
+      expect { described_class.new(reporter: reporter).call(handle: "cozy-wool-socks") }.to raise_error(StandardError)
+
+      expect(reporter).to have_received(:event).with(:failure, step: "agent run", reason: "Gemini rate limited")
     end
   end
 end
