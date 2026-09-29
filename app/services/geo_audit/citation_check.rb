@@ -2,7 +2,7 @@ module GeoAudit
   class CitationCheck
     MODEL = Models.for(:citation)
 
-    def initialize(retrier: Retrier.new(tracker: Usage.current_tracker, part: :citation))
+    def initialize(retrier: Retrier.new)
       @retrier = retrier
     end
 

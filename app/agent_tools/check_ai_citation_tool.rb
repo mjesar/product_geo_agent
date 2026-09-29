@@ -14,7 +14,17 @@ class CheckAiCitationTool < LittleGhost::Tool
     }
   }, required: [ "product_title", "category" ], additionalProperties: false
 
-  def initialize(citation_check: GeoAudit::CitationCheck.new, **kwargs)
+  # Keeps little_ghost from dispatching this tool through its thread-spawning
+  # executor, so before_tool/after_tool hooks see the same Thread.current-scoped
+  # state Auditor set up on the calling thread — see CheckFaqMetafieldTool.
+  exclusive true
+
+  def initialize(
+    citation_check: GeoAudit::CitationCheck.new(
+      retrier: GeoAudit::Retrier.new(tracker: GeoAudit::CurrentAudit.current.tracker, part: :citation)
+    ),
+    **kwargs
+  )
     @citation_check = citation_check
     super(**kwargs)
   end

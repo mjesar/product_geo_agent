@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mjesar/little_ghost.git
-  revision: 4d40ee9809ebaa35a8af4823a35e8a60913f4894
-  ref: 4d40ee9809ebaa35a8af4823a35e8a60913f4894
+  revision: fd96475f40d4fb8906d0342a642960894aa58549
+  ref: fd96475f40d4fb8906d0342a642960894aa58549
   specs:
     little_ghost (0.10.0)
       base64

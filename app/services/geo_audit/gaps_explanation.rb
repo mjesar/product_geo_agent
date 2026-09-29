@@ -5,7 +5,7 @@ module GeoAudit
     MODEL = Models.for(:explanation)
     PROMPT_PATH = Rails.root.join("app/prompts/geo_audit/gaps_explanation.erb")
 
-    def initialize(retrier: Retrier.new(tracker: Usage.current_tracker, part: :explanation))
+    def initialize(retrier: Retrier.new)
       @retrier = retrier
     end
 

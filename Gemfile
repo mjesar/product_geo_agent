@@ -68,7 +68,7 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "little_ghost", git: "https://github.com/mjesar/little_ghost.git", ref: "4d40ee9809ebaa35a8af4823a35e8a60913f4894" # TODO: revert to the released gem once both fixes (littleghostai/little_ghost#110, #111) merge upstream
+gem "little_ghost", git: "https://github.com/mjesar/little_ghost.git", ref: "fd96475f40d4fb8906d0342a642960894aa58549" # TODO: revert to the released gem once all three fixes (littleghostai/little_ghost#110, #111, #114) merge upstream
 gem "dotenv-rails", "~> 3.2"
 
 gem "faraday", "~> 2.14"

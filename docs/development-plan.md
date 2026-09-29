@@ -196,7 +196,7 @@ unwinding since the commit itself is solid and tested)
   tracker through a `Thread.current` slot `Auditor` sets before the run and clears
   in an `ensure`, safe only because `bin/audit` runs one audit per process at a time
 
-### ⬜ Step 8.4 — visibility: events + terminal output
+### 🔶 Step 8.4 — visibility: events + terminal output
 Branch: `audit-visibility`
 - Everything that does something announces an event to a reporter object (not
   `ActiveSupport::Notifications` — little_ghost already exposes the right hook
@@ -208,6 +208,19 @@ Branch: `audit-visibility`
   `context.state`, then exit cleanly, no backtrace
 - This is what the old "observability" step (formerly Step 10) meant — folded in
   here instead of staying separate, since it's the same work
+- Each agent tool needs `exclusive true` set: little_ghost otherwise dispatches tools
+  through a thread-spawning executor, and `CurrentAudit`'s `Thread.current` state (set
+  by `Auditor` on the calling thread) isn't visible inside a tool's own thread without
+  it — `before_tool`/`after_tool` hooks raise `CurrentAudit::MissingError` instead of
+  seeing the current run. Found while wiring hooks against a real run, not obvious
+  up front from the little_ghost docs
+- **Follow-up, not fixed here**: `GetProductDataTool` returns "not found" as a normal
+  successful tool result rather than raising, so on a handle that doesn't resolve the
+  agent still runs its full checklist (FAQ page, FAQ metafield, structured data,
+  citation) against nothing, burning several Gemini calls for no reason — confirmed
+  live, a nonexistent-handle smoke test made 4 real calls before being killed. Two
+  options, not decided yet: teach the system prompt to stop early on a not-found
+  result, or have `Auditor` check the handle resolves before invoking the agent at all
 
 ### ⬜ Step 8.5 — product list
 Branch: `product-list`

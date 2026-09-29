@@ -166,29 +166,53 @@ are real gaps here, not just nice-to-haves:
 - **Multi-turn tool calling against Gemini needs an unreleased `little_ghost` fix**:
   the first real multi-tool-calling run attempted in this project (via `GeoAuditAgent`
   — every earlier spec either mocked the client or made a single-shot
-  `LittleGhost.generate` call with no tools) surfaced two real bugs in `little_ghost`
-  0.10.0's Gemini adapter, not anything in this app's own code:
+  `LittleGhost.generate` call with no tools) surfaced three real bugs in `little_ghost`
+  0.10.0, not anything in this app's own code:
   1. Gemini attaches an opaque `thought_signature` to each function-call turn and
      requires it echoed back on the next request; the adapter never read or forwarded
      that field, so the second request in any tool-calling conversation got rejected
      with HTTP 400 ("Function call is missing a thought_signature...").
   2. Once that's fixed, the adapter sends the tool-*call* id as `functionResponse.name`
      instead of the actual function name, which Gemini also rejects.
-  Filed and fixed both upstream: [littleghostai/little_ghost#110](https://github.com/littleghostai/little_ghost/issues/110)
-  (thought_signature) and [#111](https://github.com/littleghostai/little_ghost/issues/111)
-  (functionResponse.name), with PRs [#112](https://github.com/littleghostai/little_ghost/pull/112)
-  and [#113](https://github.com/littleghostai/little_ghost/pull/113) open against
-  `littleghostai/little_ghost`. Confirmed live: with both fixes combined, a full audit
-  completes end-to-end (five tool calls, real Gemini reasoning throughout). Until those
-  merge and ship in a release, `Gemfile` points `little_ghost` at
-  `github.com/mjesar/little_ghost` on a local-only branch
-  (`combined-gemini-fixes-local-only`, not a PR, just proves the two fixes compose) —
-  `Gemfile` pins that branch's exact commit via `ref:` rather than `branch:`, so it
-  keeps resolving even if the branch itself later gets rebased or deleted once the
-  real PRs merge. `spec/agents/geo_audit_agent_live_spec.rb` genuinely passes against
-  this pinned commit (no longer `pending`) — revert the Gemfile to
-  `gem "little_ghost", "~> 0.10.0"` once both PRs merge upstream and a new version
-  ships, at which point that spec should keep passing unchanged.
+  3. Separately from the Gemini adapter: any hook registered on an `Agent` subclass
+     (`before_model`, `after_tool`, etc. — this app's own `ModelCallCounter`,
+     `ModelCallLogger`, `ToolTimer`, `ToolResultCollector` among them) is silently
+     dropped when the agent runs via `.ask`/`.stream_ask`. Root cause was in
+     `AssemblyBuilder`: building the real run instance `dup`s the calling class, then
+     re-copies class-level config onto the dup via a regex matching `/_value\z/`;
+     the attribute backing every hook is `callback_values` (plural), so it was
+     skipped, and the dup silently fell back to `Agent`'s own empty callback list.
+     No error, the run just completes with none of the hooks having fired.
+  Filed all three as issues upstream: [littleghostai/little_ghost#110](https://github.com/littleghostai/little_ghost/issues/110)
+  (thought_signature), [#111](https://github.com/littleghostai/little_ghost/issues/111)
+  (functionResponse.name), and [#114](https://github.com/littleghostai/little_ghost/issues/114)
+  (hooks dropped on `.ask`), and wrote fixes for all three, but **none of them are
+  merged upstream yet** — PRs [#112](https://github.com/littleghostai/little_ghost/pull/112),
+  [#113](https://github.com/littleghostai/little_ghost/pull/113), and
+  [#115](https://github.com/littleghostai/little_ghost/pull/115) are all still open
+  against `littleghostai/little_ghost` as of this writing. Until one merges, every one
+  of these three fixes exists only in this fork
+  (`github.com/mjesar/little_ghost`): each has its own PR branch
+  (`fix-gemini-thought-signature`, `fix-gemini-function-response-name`,
+  `fix-agent-hooks-dropped`), and all three are additionally combined onto one
+  local-only branch, `combined-gemini-fixes-local-only` (not itself a PR, just proof
+  the three compose). Confirmed live: with all three fixes combined, a full audit
+  completes end-to-end (five tool calls, real Gemini reasoning throughout, hooks
+  firing as expected). `Gemfile` points `little_ghost` at that combined branch, pinning
+  its exact commit via `ref:` rather than `branch:`, so it keeps resolving even if the
+  branch itself later gets rebased or deleted once the real PRs merge.
+  **Expected, not a mistake:** PR #115's branch (`fix-agent-hooks-dropped`) was built by
+  cherry-picking the hooks fix onto a clean `main`, then adding a regression test, so
+  that PR stays reviewable on its own without dragging in the two unrelated Gemini
+  commits. That means its commit SHA differs from the one baked into
+  `combined-gemini-fixes-local-only` (and thus from the SHA the Gemfile pins), even
+  though the actual fix content is identical between the two, they're just two
+  different branches carrying the same change. If this note is ever updated and the
+  SHAs still don't match, that's normal, not staleness, check the PR's diff against
+  `assembly_builder.rb` on the pinned commit if in doubt. `spec/agents/geo_audit_agent_live_spec.rb`
+  genuinely passes against the pinned commit (no longer `pending`) — revert the Gemfile
+  to `gem "little_ghost", "~> 0.10.0"` once all three PRs merge upstream and a new
+  version ships, at which point that spec should keep passing unchanged.
 - **Sandbox storefront is password-protected, and the toggle to disable it is locked**:
   the store is on a no-plan/development Shopify plan, and Shopify force-enables
   password protection for those — Admin → Online Store → Preferences shows the toggle
