@@ -11,7 +11,12 @@ module GeoAudit
       current_audit = CurrentAudit.current
       current_audit.record_tool_result(tool_use.name, value)
       current_audit.reporter.event(
-        :tool_finished, name: tool_use.name, duration: duration_for(tool_use, context), summary: value.to_s
+        :tool_finished,
+        name: tool_use.name,
+        duration: duration_for(tool_use, context),
+        summary: value.to_s,
+        input: tool_use.input,
+        result: value
       )
 
       nil

@@ -35,7 +35,8 @@ RSpec.describe GeoAudit::ToolResultCollector do
     described_class.new.call(payload, context: context)
 
     expect(reporter).to have_received(:event).with(
-      :tool_finished, name: "get_product_data", duration: (be >= 0), summary: a_string_including("Cozy Wool Socks")
+      :tool_finished,
+      hash_including(name: "get_product_data", duration: (be >= 0), summary: a_string_including("Cozy Wool Socks"))
     )
   end
 
@@ -43,5 +44,13 @@ RSpec.describe GeoAudit::ToolResultCollector do
     described_class.new.call(payload, context: context)
 
     expect(reporter).to have_received(:event).with(:tool_finished, hash_including(duration: nil))
+  end
+
+  it "announces the raw input and result, for a verbose reporter to print" do
+    described_class.new.call(payload, context: context)
+
+    expect(reporter).to have_received(:event).with(
+      :tool_finished, hash_including(input: tool_use.input, result: { title: "Cozy Wool Socks" })
+    )
   end
 end
