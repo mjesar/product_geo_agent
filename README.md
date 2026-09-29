@@ -18,6 +18,22 @@ The agent decides which checks to run and in what order — it isn't a fixed pip
 
 **[→ Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk)** — diagrams of the system architecture, the agent's decision flow, and the dev workflow used to build this.
 
+## Usage
+
+```bash
+bin/audit PRODUCT_HANDLE
+```
+
+Runs a full audit against a real Shopify product and prints a live view of what the
+agent does as it happens: which tool it calls each turn, what it finds, and the final
+score with the model's own explanation of the biggest gaps.
+
+| Flag | What it does |
+|---|---|
+| `--verbose` | Also print each tool's full raw input and result, not just the summary — for debugging, not for a clean read |
+| `--trace` | Write a redacted, JSON-lines trace of every event (including the real request/response sent to the model) to `traces/` |
+| `--trace=PATH` | Same, but write to `PATH` instead of the default auto-generated filename |
+
 ## Why
 
 Most AI-readiness "audits" are just SEO checklists with an AI label on them. This project focuses specifically on what's unique to AI discoverability: whether an LLM would actually cite or recommend the product, not just whether the page is technically well-formed.
@@ -39,9 +55,11 @@ project exposing a Shopify-style store to LLM agents.
 
 ## Status
 
-🚧 In development — all five audit tools are built and tested, and `GeoAuditAgent`
-now wires them together with a real reasoning loop (PR open, not yet merged). Next
-up: a CLI entrypoint to run a full audit end-to-end.
+🚧 In development — the full pipeline works end to end: five tools, `GeoAuditAgent`
+wiring them together with a real reasoning loop, deterministic scoring, retry/backoff
+and usage tracking, and a CLI (`bin/audit`) with live visibility into what the agent
+is doing, including a redacted `--trace` file for later inspection. Next up: saving
+audit history, and a real sandbox run to calibrate the scoring weights.
 
 ## Docs
 
