@@ -28,10 +28,9 @@ class GeoAuditAgent < LittleGhost::Agent
     additionalProperties: false
   )
 
-  after_tool do |payload, context:|
-    context.state[payload[:tool_use].name] = payload[:result].value
-  end
-
+  before_tool GeoAudit::ToolTimer.new
+  after_tool GeoAudit::ToolResultCollector.new
   before_model GeoAudit::ModelCallCounter.new
+  after_model GeoAudit::ModelCallLogger.new
   after_model_error GeoAudit::ModelErrorRecovery.new
 end
