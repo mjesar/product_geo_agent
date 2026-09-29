@@ -1,5 +1,9 @@
 module GeoAudit
   class ToolResultCollector
+    def initialize(summarizer: ToolSummary.new)
+      @summarizer = summarizer
+    end
+
     def call(payload, context:)
       tool_use = payload[:tool_use]
       value = payload[:result].value
@@ -14,7 +18,7 @@ module GeoAudit
         :tool_finished,
         name: tool_use.name,
         duration: duration_for(tool_use, context),
-        summary: value.to_s,
+        summary: @summarizer.call(tool_use.name, value),
         input: tool_use.input,
         result: value
       )
