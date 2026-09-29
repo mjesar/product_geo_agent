@@ -117,12 +117,13 @@ RSpec.describe GeoAudit::Auditor do
 
     it "announces the start, the computed score, and the final usage summary to the reporter" do
       reporter = instance_double(GeoAudit::Reporter::Null, event: nil)
-      stub_collaborators(run: completed_run(state: tool_results, ratings: ratings))
+      stub_collaborators(run: completed_run(state: tool_results, ratings: ratings), explanation: "Add a FAQ page.")
 
       described_class.new(clock: clock, reporter: reporter).call(handle: "cozy-wool-socks")
 
       expect(reporter).to have_received(:event).with(:start, handle: "cozy-wool-socks", model: GeoAuditAgent.model)
       expect(reporter).to have_received(:event).with(:score_computed, result: score_result)
+      expect(reporter).to have_received(:event).with(:explanation, text: "Add a FAQ page.")
       expect(reporter).to have_received(:event).with(
         :usage_summary, snapshot: instance_of(GeoAudit::Usage::Snapshot), elapsed: 4.5
       )
