@@ -1,8 +1,8 @@
 # ProductGeoAgent
 
-A Ruby on Rails CLI agent that rates how AI-discoverable a Shopify product is — whether AI shopping assistants (ChatGPT, Gemini, Perplexity, AI Overviews) would actually surface, recommend, or cite it.
+A Ruby on Rails CLI agent that rates how AI-discoverable a Shopify product is (GEO/AEO) — whether AI shopping assistants (ChatGPT, Gemini, Perplexity, AI Overviews) would actually surface, recommend, or cite it.
 
-Built as a hands-on agent-development learning project using the [`little_ghost`](https://github.com/littleghostai/little_ghost) Ruby gem, and as a source of reusable building blocks for a planned GEO/AEO Shopify app.
+Built as a hands-on agent-development learning project using the [`little_ghost`](https://github.com/littleghostai/little_ghost) Ruby gem.
 
 ## What it does
 

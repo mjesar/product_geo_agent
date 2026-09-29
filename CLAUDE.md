@@ -23,8 +23,7 @@ just a deliverable. Please:
 ## What this is
 A Ruby on Rails CLI agent that rates how AI-discoverable a Shopify product is (GEO/AEO) —
 whether AI shopping assistants would surface, recommend, or cite it. Built as an
-agent-development learning project using the `little_ghost` gem, and to produce reusable
-building blocks for a separate planned Shopify app (`geo-aeo-shopify-app`).
+agent-development learning project using the `little_ghost` gem.
 
 ## Stack
 - Ruby on Rails, PostgreSQL
