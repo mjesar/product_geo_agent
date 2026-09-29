@@ -4,11 +4,13 @@ module GeoAudit
       def initialize(
         io: $stdout,
         clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
-        redactor: GeoAudit::Redactor.new
+        redactor: GeoAudit::Redactor.new,
+        verbose: false
       )
         @io = io
         @clock = clock
         @redactor = redactor
+        @verbose = verbose
         @started_at = nil
         @call_count = 0
       end
@@ -39,17 +41,21 @@ module GeoAudit
         @io.puts "Audit: #{handle}   (model: #{model})"
       end
 
-      def agent_call_started(turn:)
+      def agent_call_started(turn:, request: nil)
         @call_count += 1
         line "Gemini call #{@call_count}: asking what to do next"
       end
 
-      def agent_call_finished(turn:, duration:, decision:)
+      def agent_call_finished(turn:, duration:, decision:, response: nil)
         line "  #{decision}  (#{format_seconds(duration)})"
       end
 
-      def tool_finished(name:, duration:, summary:)
+      def tool_finished(name:, duration:, summary:, input: nil, result: nil)
         line "Tool #{name}: #{summary}"
+        return unless @verbose
+
+        line "  input: #{input.inspect}"
+        line "  result: #{result.inspect}"
       end
 
       def retry_attempt(part:, attempt:, delay:, status:, reason:)
@@ -60,8 +66,12 @@ module GeoAudit
         line "Ruby calculates the score: TOTAL #{result.total}/100"
       end
 
-      def failure(step:, reason:)
+      def failure(step:, reason:, partial_results: {})
         line "!! #{step} failed: #{reason}"
+        return if partial_results.empty?
+
+        line "  partial results so far:"
+        partial_results.each { |name, value| line "    #{name}: #{value.inspect}" }
       end
 
       def usage_summary(snapshot:, elapsed:)

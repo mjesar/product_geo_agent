@@ -3,9 +3,9 @@ require "rails_helper"
 RSpec.describe GeoAudit::Reporter::Terminal do
   let(:io) { StringIO.new }
 
-  def reporter(times, redactor: GeoAudit::Redactor.new(secrets: []))
+  def reporter(times, redactor: GeoAudit::Redactor.new(secrets: []), verbose: false)
     clock_times = times.dup
-    described_class.new(io: io, clock: -> { clock_times.shift }, redactor: redactor)
+    described_class.new(io: io, clock: -> { clock_times.shift }, redactor: redactor, verbose: verbose)
   end
 
   def output
@@ -47,6 +47,50 @@ RSpec.describe GeoAudit::Reporter::Terminal do
     expect(output.last).to eq("[00:01.6] Tool get_product_data: 3 variants, 2 images")
   end
 
+  it "leaves out the raw input and result in default mode, even when the event carries them" do
+    r = reporter([0.0, 1.6])
+    r.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
+    r.event(
+      :tool_finished, name: "get_product_data", duration: 0.4, summary: "3 variants, 2 images",
+      input: { handle: "cozy-wool-socks" }, result: { title: "Cozy Wool Socks" }
+    )
+
+    expect(output).to eq([
+      "Audit: cozy-wool-socks   (model: gemini-flash-lite-latest)",
+      "[00:01.6] Tool get_product_data: 3 variants, 2 images"
+    ])
+  end
+
+  it "shows a tool's raw input and result in verbose mode, underneath the summary" do
+    r = reporter([0.0, 1.6, 1.6, 1.6], verbose: true)
+    r.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
+    r.event(
+      :tool_finished, name: "get_product_data", duration: 0.4, summary: "3 variants, 2 images",
+      input: { handle: "cozy-wool-socks" }, result: { title: "Cozy Wool Socks" }
+    )
+
+    expect(output).to eq([
+      "Audit: cozy-wool-socks   (model: gemini-flash-lite-latest)",
+      "[00:01.6] Tool get_product_data: 3 variants, 2 images",
+      '[00:01.6]   input: {handle: "cozy-wool-socks"}',
+      '[00:01.6]   result: {title: "Cozy Wool Socks"}'
+    ])
+  end
+
+  it "redacts secrets inside a verbose tool's input and result" do
+    redactor = GeoAudit::Redactor.new(secrets: [ "super-secret-token" ])
+    r = reporter([0.0, 1.6, 1.6, 1.6], redactor: redactor, verbose: true)
+    r.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
+
+    r.event(
+      :tool_finished, name: "get_product_data", duration: 0.4, summary: "ok",
+      input: {}, result: { token: "super-secret-token" }
+    )
+
+    expect(io.string).not_to include("super-secret-token")
+    expect(io.string).to include("[REDACTED]")
+  end
+
   it "flags a retry with the reason" do
     r = reporter([0.0, 14.0])
     r.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
@@ -69,6 +113,33 @@ RSpec.describe GeoAudit::Reporter::Terminal do
     r.event(:failure, step: "get_product_data", reason: "product not found")
 
     expect(output.last).to eq("[00:25.0] !! get_product_data failed: product not found")
+  end
+
+  it "prints any partial results underneath a failure" do
+    r = reporter([0.0, 25.0, 25.0, 25.0])
+    r.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
+    r.event(
+      :failure, step: "agent run", reason: "Gemini rate limited",
+      partial_results: { "get_product_data" => { title: "Cozy Wool Socks" } }
+    )
+
+    expect(output).to eq([
+      "Audit: cozy-wool-socks   (model: gemini-flash-lite-latest)",
+      "[00:25.0] !! agent run failed: Gemini rate limited",
+      "[00:25.0]   partial results so far:",
+      '[00:25.0]     get_product_data: {title: "Cozy Wool Socks"}'
+    ])
+  end
+
+  it "leaves out the partial-results block entirely when there are none" do
+    r = reporter([0.0, 25.0])
+    r.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
+    r.event(:failure, step: "agent run", reason: "Gemini rate limited", partial_results: {})
+
+    expect(output).to eq([
+      "Audit: cozy-wool-socks   (model: gemini-flash-lite-latest)",
+      "[00:25.0] !! agent run failed: Gemini rate limited"
+    ])
   end
 
   it "prints the usage summary without a timestamp" do
