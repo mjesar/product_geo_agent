@@ -25,10 +25,15 @@ module GeoAudit
       attempt = (attempts_by_turn[turn_key] || 0) + 1
       attempts_by_turn[turn_key] = attempt
 
-      delay = @policy.delay_for(payload[:error], attempt:)
+      error = payload[:error]
+      delay = @policy.delay_for(error, attempt:)
       return nil unless delay
 
-      Usage.current_tracker&.record_retry!(:agent)
+      current_audit = CurrentAudit.current
+      current_audit.tracker.record_retry!(:agent)
+      current_audit.reporter.event(
+        :retry, part: :agent, attempt: attempt, delay: delay, status: error.status, reason: error.message
+      )
       @sleeper.call(delay)
       LittleGhost::Support::Callbacks.replace({ request: payload[:request] })
     end

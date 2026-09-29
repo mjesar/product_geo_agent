@@ -3,18 +3,6 @@ module GeoAudit
     PartSnapshot = Data.define(:calls, :retries, :input_tokens, :output_tokens)
     Snapshot = Data.define(:agent, :citation, :explanation, :total)
 
-    # GeoAuditAgent's hooks (before_model, ModelErrorRecovery) and CitationCheck's
-    # default retrier are all singletons/defaults evaluated outside Auditor's
-    # control, so this thread-local is how the current audit's tracker reaches
-    # them. Safe here since bin/audit runs exactly one audit per process at a time.
-    def self.current_tracker
-      Thread.current[:geo_audit_usage_tracker]
-    end
-
-    def self.current_tracker=(tracker)
-      Thread.current[:geo_audit_usage_tracker] = tracker
-    end
-
     class Tracker
       PARTS = %i[agent citation explanation].freeze
 
