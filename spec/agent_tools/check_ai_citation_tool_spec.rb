@@ -22,5 +22,19 @@ RSpec.describe CheckAiCitationTool do
         response: "I'd recommend Cozy Wool Socks."
       )
     end
+
+    it "builds a real CitationCheck wired to the current audit's tracker when none is injected" do
+      tracker = GeoAudit::Usage::Tracker.new
+      GeoAudit::CurrentAudit.current = GeoAudit::CurrentAudit.new(tracker: tracker, reporter: GeoAudit::Reporter::Null.new)
+      response = instance_double(LittleGhost::RunResult, text: "Cozy Wool Socks are great.")
+      allow(LittleGhost).to receive(:generate).and_return(response)
+
+      result = described_class.new.call({ "product_title" => "Cozy Wool Socks", "category" => "wool socks" })
+
+      expect(result[:mentioned]).to eq(true)
+      expect(tracker.snapshot.citation.calls).to eq(1)
+    ensure
+      GeoAudit::CurrentAudit.current = nil
+    end
   end
 end

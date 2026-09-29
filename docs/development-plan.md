@@ -208,6 +208,12 @@ Branch: `audit-visibility`
   `context.state`, then exit cleanly, no backtrace
 - This is what the old "observability" step (formerly Step 10) meant — folded in
   here instead of staying separate, since it's the same work
+- Each agent tool needs `exclusive true` set: little_ghost otherwise dispatches tools
+  through a thread-spawning executor, and `CurrentAudit`'s `Thread.current` state (set
+  by `Auditor` on the calling thread) isn't visible inside a tool's own thread without
+  it — `before_tool`/`after_tool` hooks raise `CurrentAudit::MissingError` instead of
+  seeing the current run. Found while wiring hooks against a real run, not obvious
+  up front from the little_ghost docs
 
 ### ⬜ Step 8.5 — product list
 Branch: `product-list`
