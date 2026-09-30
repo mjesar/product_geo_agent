@@ -32,7 +32,7 @@ score with the model's own explanation of the biggest gaps.
 |---|---|
 | `--verbose` | Also print each tool's full raw input and result, not just the summary — for debugging, not for a clean read |
 | `--trace` | Write a redacted, JSON-lines trace of every event (including the real request/response sent to the model) to `traces/` |
-| `--trace=PATH` | Same, but write to `PATH` instead of the default auto-generated filename |
+| `--trace-path=PATH` | Same, but write to `PATH` instead of the default auto-generated filename |
 
 ## Why
 
