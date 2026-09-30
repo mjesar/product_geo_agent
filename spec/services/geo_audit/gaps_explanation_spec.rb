@@ -91,6 +91,39 @@ RSpec.describe GeoAudit::GapsExplanation do
       expect(sent_prompt).to include("Every item earned full credit, so there are no gaps to report.")
     end
 
+    it "caps the gaps covered at three" do
+      stub_gemini_response("...")
+
+      described_class.new.call(score: build_score(total: 62))
+
+      expect(sent_prompt).to match(/at most the top 3 gaps/)
+      expect(sent_prompt).to match(/Do not mention any gap outside those\s+top 3/)
+    end
+
+    it "limits the hard-to-fix exception to the top three gaps, so it can't reopen the cap" do
+      stub_gemini_response("...")
+
+      described_class.new.call(score: build_score(total: 62))
+
+      expect(sent_prompt).to match(/If one of those top 3 is hard for the owner to fix/)
+    end
+
+    it "asks for plain text with no markdown" do
+      stub_gemini_response("...")
+
+      described_class.new.call(score: build_score(total: 62))
+
+      expect(sent_prompt).to match(/plain text only: no markdown, no bold, no asterisks/)
+    end
+
+    it "tells the model not to repeat the rating words in its prose" do
+      stub_gemini_response("...")
+
+      described_class.new.call(score: build_score(total: 62))
+
+      expect(sent_prompt).to match(/Do not repeat the phrases "rated poor",\s+"rated fair", or "rated good"/)
+    end
+
     it "tells the model to copy numbers exactly and never add or subtract them" do
       stub_gemini_response("...")
 
