@@ -46,29 +46,6 @@ score with the model's own explanation of the biggest gaps.
 
 Most AI-readiness "audits" are just SEO checklists with an AI label on them. This project focuses specifically on what's unique to AI discoverability: whether an LLM would actually cite or recommend the product, not just whether the page is technically well-formed.
 
-## Frequently asked questions
-
-**How do I check whether ChatGPT or other AI assistants can recommend my Shopify product?**
-Run `bin/audit PRODUCT_HANDLE`. The agent reads the product through the Shopify Storefront API, checks FAQ content and structured data, asks an LLM whether it would recommend the product, and returns a 0 to 100 score with the top gaps to fix. It measures how well a listing is set up, not whether an assistant will actually recommend it.
-
-**What is AI discoverability?**
-How easily AI assistants can find, understand and cite a product. It depends on a specific description, answers to common buyer questions, FAQ content and machine-readable structured data.
-
-**Does structured data (JSON-LD) help AI search?**
-It gives software a clean, machine-readable description of the product, which is why the tool checks for it. This tool cannot prove that any particular assistant uses it, so the score treats it as one signal out of seven, not a guarantee.
-
-**Why is the "would an AI recommend it" check usually zero?**
-For a small or unknown store, assistants rarely name the product when asked an open buyer question. That is the honest result, not a bug.
-
-**Does it change my store?**
-No. It only reads, through the Shopify Storefront API.
-
-**Is it a fixed checklist or a real AI agent?**
-A real agent. A model picks the next check after each result, using tool calling. For example, it looks at the product's own FAQ field only when no FAQ page is found.
-
-**Can I trust the score?**
-Partly. The arithmetic is plain Ruby, so the same facts always give the same score. Three items (description, buyer questions, specs) are rated by the model and can vary from run to run, and an eval harness to measure that is planned. See the next section.
-
 ## What calibrating it found
 
 Before trusting the score, I ran the agent against three sandbox products (a full listing, a thin one and a blank one) and compared each score to what it should have been. That turned up two grounding failures in the generated explanations. The first was stale evidence: a check got stricter but the sentence describing its failure did not, so the model gave advice that was right for the old check and wrong for reality. The second was unreliable arithmetic: given correct per-item numbers, it still wrote "lost 55 points" when 75 were lost. The fix both times was to move the computation into Ruby and let the model describe only finished, already-correct results. Each fix was verified on one run per product, which confirms direction, not stability, so an eval harness is next. [Full write-up](docs/agent-concepts.md#grounding-keeping-the-models-words-tied-to-real-facts).
@@ -103,6 +80,7 @@ measure how stable the agent's ratings are from run to run.
 - [`docs/user-guide.md`](docs/user-guide.md) - plain-language guide to what the tool does, with real audit outputs (no code reading needed)
 - [`docs/development-plan.md`](docs/development-plan.md) — step-by-step build plan, one branch/PR per step
 - [`docs/agent-concepts.md`](docs/agent-concepts.md) — running notes on agent-development concepts learned while building this
+- [`docs/faq.md`](docs/faq.md) - short answers on building AI agents with Ruby on Rails, and on checking whether AI assistants can recommend a Shopify product
 - [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md) — how the Storefront API token was set up
 
 ## Setup
@@ -119,3 +97,17 @@ Required environment variables:
 - `SHOPIFY_STOREFRONT_TOKEN` — Shopify Storefront API access token (read-only)
 - `SHOPIFY_STORE_DOMAIN` — e.g. `your-sandbox-store.myshopify.com`
 - `SHOPIFY_STOREFRONT_PASSWORD` — only needed if the store is password-protected (see [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md))
+
+## Frequently asked questions
+
+Short answers for developers building AI agents with Ruby on Rails, and for store owners
+checking whether AI assistants can recommend a Shopify product, are in
+[`docs/faq.md`](docs/faq.md). A few of them:
+
+- [How do I build an AI agent in Ruby on Rails?](docs/faq.md#how-do-i-build-an-ai-agent-in-ruby-on-rails)
+- [What is tool calling (function calling), and how does it work in Ruby?](docs/faq.md#what-is-tool-calling-function-calling-and-how-does-it-work-in-ruby)
+- [How do I stop an LLM from getting numbers wrong?](docs/faq.md#how-do-i-stop-an-llm-from-getting-numbers-wrong)
+- [How do I test an AI agent with RSpec?](docs/faq.md#how-do-i-test-an-ai-agent-with-rspec)
+- [How do I check whether ChatGPT or other AI assistants can recommend my Shopify product?](docs/faq.md#how-do-i-check-whether-chatgpt-or-other-ai-assistants-can-recommend-my-shopify-product)
+- [Does it work with BigCommerce?](docs/faq.md#does-it-work-with-bigcommerce)
+- [Can I trust the score?](docs/faq.md#can-i-trust-the-score)
