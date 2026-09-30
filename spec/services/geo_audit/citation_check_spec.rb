@@ -58,7 +58,7 @@ RSpec.describe GeoAudit::CitationCheck do
     end
 
     it "retries a transient provider error before giving up" do
-      retrier = GeoAudit::Retrier.new(sleeper: ->(_seconds) {})
+      retrier = GeoAudit::Retrier.new(sleeper: ->(_seconds) { })
       citation_check = described_class.new(retrier: retrier)
       response = instance_double(LittleGhost::RunResult, text: "Cozy Wool Socks are great.")
       attempts = 0

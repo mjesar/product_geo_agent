@@ -23,7 +23,7 @@ RSpec.describe GeoAudit::Auditor do
   let(:tool_results) { { get_product_data: { title: "Cozy Wool Socks" } } }
   let(:ratings) { { description_quality: { rating: "good", reason: "Names material and fit." } } }
   let(:score_result) { GeoAudit::Score::Result.new(total: 82, items: []) }
-  let(:clock_times) { [0.0, 4.5] }
+  let(:clock_times) { [ 0.0, 4.5 ] }
   let(:clock) { -> { clock_times.shift } }
 
   def stub_collaborators(run:, explanation: "Add a FAQ page.")

@@ -7,7 +7,7 @@ module GeoAudit
       PARTS = %i[agent citation explanation].freeze
 
       def initialize
-        @counts = PARTS.to_h { |part| [part, { calls: 0, retries: 0, input_tokens: 0, output_tokens: 0 }] }
+        @counts = PARTS.to_h { |part| [ part, { calls: 0, retries: 0, input_tokens: 0, output_tokens: 0 } ] }
       end
 
       # fetch, not [], so a typo'd part fails loudly instead of silently tracking nothing
@@ -25,7 +25,7 @@ module GeoAudit
       end
 
       def snapshot
-        parts = PARTS.to_h { |part| [part, PartSnapshot.new(**@counts.fetch(part))] }
+        parts = PARTS.to_h { |part| [ part, PartSnapshot.new(**@counts.fetch(part)) ] }
         total = PartSnapshot.new(
           calls: parts.values.sum(&:calls),
           retries: parts.values.sum(&:retries),

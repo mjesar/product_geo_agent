@@ -1,8 +1,8 @@
 module GeoAudit
   class RetryPolicy
     DELAYS = {
-      503 => [5, 15, 30].freeze,
-      429 => [15, 30, 60].freeze
+      503 => [ 5, 15, 30 ].freeze,
+      429 => [ 15, 30, 60 ].freeze
     }.freeze
 
     def self.delay_for(error, attempt:)

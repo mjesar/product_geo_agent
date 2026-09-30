@@ -27,7 +27,7 @@ RSpec.describe GeoAudit::Retrier do
 
     expect(result).to eq("ok")
     expect(attempts).to eq(3)
-    expect(sleeps).to eq([5, 15])
+    expect(sleeps).to eq([ 5, 15 ])
   end
 
   it "re-raises immediately without sleeping when the error isn't retryable" do
@@ -45,6 +45,6 @@ RSpec.describe GeoAudit::Retrier do
     end.to raise_error(LittleGhost::Providers::HTTPError)
 
     expect(attempts).to eq(4)
-    expect(sleeps).to eq([5, 15, 30])
+    expect(sleeps).to eq([ 5, 15, 30 ])
   end
 end

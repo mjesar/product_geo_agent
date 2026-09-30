@@ -26,7 +26,7 @@ RSpec.describe GeoAudit::ModelErrorRecovery do
 
     expect(decision).to be_a(LittleGhost::Support::Callbacks::Replace)
     expect(decision.value).to eq(request: request)
-    expect(sleeps).to eq([5])
+    expect(sleeps).to eq([ 5 ])
   end
 
   it "records the retry on the tracker and announces it to the reporter before sleeping" do
@@ -59,7 +59,7 @@ RSpec.describe GeoAudit::ModelErrorRecovery do
     decision = recovery.call(payload(turn: 1, status: 503), context: context)
     fourth_decision = recovery.call(payload(turn: 1, status: 503), context: context)
 
-    expect(sleeps).to eq([5, 15, 30])
+    expect(sleeps).to eq([ 5, 15, 30 ])
     expect(decision).to be_a(LittleGhost::Support::Callbacks::Replace)
     expect(fourth_decision).to be_nil
   end
@@ -70,6 +70,6 @@ RSpec.describe GeoAudit::ModelErrorRecovery do
 
     recovery.call(payload(turn: 2, status: 503), context: context)
 
-    expect(sleeps).to eq([5])
+    expect(sleeps).to eq([ 5 ])
   end
 end

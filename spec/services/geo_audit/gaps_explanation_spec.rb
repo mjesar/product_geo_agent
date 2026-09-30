@@ -144,7 +144,7 @@ RSpec.describe GeoAudit::GapsExplanation do
     end
 
     it "retries a transient provider error before giving up" do
-      retrier = GeoAudit::Retrier.new(sleeper: ->(_seconds) {})
+      retrier = GeoAudit::Retrier.new(sleeper: ->(_seconds) { })
       gaps_explanation = described_class.new(retrier: retrier)
       response = instance_double(LittleGhost::RunResult, text: "Add a FAQ page.")
       attempts = 0
