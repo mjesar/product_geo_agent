@@ -126,7 +126,9 @@ RSpec.describe GeoAudit::Score do
           ratings: ratings
         ).call
 
-        expect(item(result, :structured_data).points).to eq(0)
+        structured_data = item(result, :structured_data)
+        expect(structured_data.points).to eq(0)
+        expect(structured_data.detail).to eq("Product schema is present but has no description or offers")
       end
 
       it "gives full credit when only the FAQPage schema is present" do
@@ -150,7 +152,9 @@ RSpec.describe GeoAudit::Score do
           ratings: ratings
         ).call
 
-        expect(item(result, :structured_data).points).to eq(0)
+        structured_data = item(result, :structured_data)
+        expect(structured_data.points).to eq(0)
+        expect(structured_data.detail).to eq("no Product/FAQPage structured data found")
       end
     end
 
