@@ -286,6 +286,16 @@ Branch: `eval-harness`
   "how far off was this" than "pass/fail"
 - Needs the full agent (step 6) and ideally the visibility work (step 8.4) to make
   failures diagnosable, not just visible
+- **Strongest eval candidate found so far: `specs_clarity` is not stable.** On
+  `the-complete-snowboard` (same product, same `specs_clarity` wording throughout),
+  four runs rated it fair, good, good, fair, which moved the score 65, 85, 85, 80.
+  The cleanest evidence is the last flip (good to fair, 2026-09-30 to 2026-10-01),
+  where nothing relevant changed in between. The first flip (fair to good) is
+  confounded: the store FAQ page had just been added, so the model saw different
+  context. Either way, the instability is in the model's judgment, not in the code,
+  and each flip moves the score by 5 points. One run per product cannot see this,
+  so the harness should run each product several times and report the spread, not
+  a single number
 - **Concept focus:** evals vs. tests — RSpec specs prove the code doesn't crash and
   returns the right shape; they say nothing about whether the agent's actual
   judgment (the score, the gaps it flags) is any good. An eval harness is the
