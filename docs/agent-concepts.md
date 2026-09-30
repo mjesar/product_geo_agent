@@ -132,9 +132,9 @@ These get used interchangeably but mean different things:
 
 **What belongs in code vs. in the model**
 
-Right now, `system_prompt.erb` asks the model to calculate the final score out of 100
+Originally, `system_prompt.erb` asked the model to calculate the final score out of 100
 itself, by reading the rubric table and doing the weighted arithmetic in its head.
-That's the wrong split of responsibility: arithmetic is exactly the kind of thing a
+That was the wrong split of responsibility: arithmetic is exactly the kind of thing a
 language model is bad at being *consistent* about — the same tool results could produce
 a slightly different score on two different runs, since nothing about token-by-token
 generation guarantees the same arithmetic twice.
@@ -179,7 +179,8 @@ sentences about it. It has no memory of the tool-calling run and no way to chang
 number — it can only describe what Ruby already decided. The score itself is
 reproducible for the same tool results and ratings every time; only the wording of its
 explanation can vary between runs, which is a contained, acceptable kind of
-nondeterminism compared to letting a model do the arithmetic itself.
+nondeterminism compared to letting a model do the arithmetic itself. (Step 9 later
+found that even *describing* a score needs care, see the Grounding section below.)
 
 ## What a "trace" looks like
 
@@ -223,6 +224,142 @@ a real bug (Gemini's `thought_signature` requirement for multi-turn tool calls i
 supported by `little_ghost` 0.10.0's Gemini adapter — see Known limitations in
 `CLAUDE.md`) that no mocked spec could ever have caught, since every mocked spec
 necessarily assumes the model/adapter round-trip already works.
+
+## Grounding: keeping the model's words tied to real facts
+
+**What grounding means.** A model is "grounded" when what it says stays tied to the
+facts it was actually given, instead of drifting away from them. Picture someone
+reading a report aloud to a client. If they read exactly what is on the page, the
+client hears the truth. If the page is out of date, or they start doing sums in their
+head, the client hears something wrong, even though the reader was being honest.
+
+That is exactly the last step of this app. Once the score is worked out,
+`GeoAudit::GapsExplanation` (`app/services/geo_audit/gaps_explanation.rb`) hands a
+model the finished breakdown and asks it to explain the biggest gaps to the store owner
+in plain English. Everything it should say is already on the page. Step 9 found that it
+still got things wrong, in two different ways, plus a third closely related problem.
+
+**Failure 1: the evidence went stale.** When the structured data check was made
+stricter, a blank product started scoring 0 for it. But the sentence that describes
+that failure (in `structured_data_item`, `app/services/geo_audit/score.rb`) still said:
+
+> no Product/FAQPage structured data found
+
+What was actually true: the page *did* have a Product block (every Shopify theme adds
+one), but its description was empty. What the model told the owner, reasoning correctly
+from the sentence it had:
+
+> implement proper JSON-LD schema markup
+
+That is sensible advice for the sentence and wrong for reality. The markup existed. The
+real fix was writing a product description.
+
+This is worth separating from the usual idea of a hallucination. The model did not make
+something up from nothing. It described reality wrongly because the text it was given no
+longer matched reality. I call that a **grounding failure caused by stale evidence**.
+
+The fix: `score.rb` now says "Product schema is present but has no description or
+offers" for that case, and `app/services/geo_audit/tool_summary.rb` prints "Product
+schema: incomplete" in the terminal. The next run told the owner to add a description
+and offers to the existing schema. The lesson: every sentence the model reads is
+evidence. When a check's meaning changes, every sentence describing its result has to
+change too, and a spec should pin the wording (`spec/services/geo_audit/score_spec.rb`
+checks the exact text for both the "incomplete" and "nothing at all" cases).
+
+> [Diagram spot 1: a timeline. The check changes from "Product block exists" to
+> "Product block is complete", while the failure sentence stays the same. Mark the point
+> where the model's advice goes wrong.]
+
+**Failure 2: it added the numbers up wrong.** The model was given correct per-item
+points and still wrote things like "losing 55 points" when 75 had been lost, and "30
+points" for two gaps worth 35 together (20 + 15).
+
+Why: a model writes one word at a time and has no calculator inside it. Adding several
+numbers while it is still writing the sentence is a guess that is usually right and
+sometimes not. It is the same reason scoring moved out of the model in Step 7.
+
+The obvious alternative was better wording in the prompt, something like "be careful
+when adding". But a prompt can only *ask* for correct arithmetic, and code can
+*guarantee* it. So the subtraction and the sorting moved into Ruby, in
+`app/services/geo_audit/score.rb`:
+
+- `Item#lost` is weight minus points (a "fair" description gets 7.5 of 15, so 7.5 is
+  lost). It rounds to one decimal, and whole numbers come back as integers so they
+  print as `10`, not `10.0`.
+- `Result#gaps` returns only the items that lost points, biggest loss first. Ties keep
+  the rubric's own order (the original position is part of the sort key), so the order
+  is the same on every run.
+- `Result#total_lost` is `100 - total`, not the sum of the item losses. The reason is
+  rounding: a total of 77.5 rounds to 78, but the item losses add up to 22.5, and 78 +
+  22.5 is 100.5. Using `100 - 78 = 22` guarantees the score and the points lost always
+  add to 100.
+
+The prompt template (`app/prompts/geo_audit/gaps_explanation.erb`) then only prints
+those finished values, for example for the middling product:
+
+```
+Total score: 48 / 100
+Total points lost: 52
+
+Gaps, biggest loss first (only items that lost points are listed):
+- Answers common buyer questions: lost 20 of 20 points. ...
+- AI citation check: lost 15 of 15 points. ...
+- Clear specs/variants: lost 10 of 10 points. ...
+```
+
+and tells the model to copy every number exactly and never add, subtract or combine
+them. On the three sandbox products, every number the explanation quoted then matched
+the breakdown (total points lost 20, 52 and 75), and the model never tried to add the
+per-item losses together.
+
+![How a score becomes an explanation: Ruby works out each item's points, the points lost and the sorted gaps, then the model only writes the words](score_to_explanation_flow.png)
+
+*The green steps are plain Ruby and give the same answer every time for the same facts.
+Only the last step is the model, and it receives finished numbers.*
+
+**A third, related cause: an instruction that was too vague.** The store has one FAQ
+page, and it already earns its own 15 points under `faq_content`. The instruction for
+`buyer_questions_answered` in `app/prompts/geo_audit/system_prompt.erb` said "good if it
+proactively covers things a buyer would ask" without saying what "it" was. The model
+counted the store FAQ page again, so the middling product jumped from 33 to 68 the moment
+the page existed, when the expected score was 48. One sentence fixed it (judge only the
+product's own content), and the next run matched the prediction exactly: 85 / 48 / 40.
+This was neither stale evidence nor bad arithmetic. The wording let evidence from one
+check leak into another rating.
+
+![The store FAQ page feeds faq_content correctly, but was also counted a second time in buyer_questions_answered](faq_double_counting_bug.png)
+
+*The green arrow is the FAQ page earning its own 15 points. The red dashed arrow is the
+bug: the same page also boosted the 20-point buyer-questions rating.*
+
+**How this connects to the rest of this file.**
+
+- *Code vs. model* (see "What belongs in code vs. in the model" above): that section
+  said arithmetic with one right answer belongs in code. Step 7 applied the rule to the
+  score. This applies the same rule to the sentences *about* the score: if the
+  explanation needs a number, compute it first and hand it over.
+- *Two conversations, not one*: that section says the explanation "can only describe
+  what Ruby already decided". That is true of the score, but describing still involves
+  choosing which numbers to state and how to combine them, and that is where Failure 2
+  crept in. Give the model finished numbers there too.
+- *Specs vs. evals*: the specs in `spec/services/geo_audit/gaps_explanation_spec.rb`
+  check what the prompt *says* (which gaps it lists, and that it tells the model not to
+  add). They cannot tell whether the model obeys. The only way to know was to run the
+  real agent and check every number it quoted against the breakdown by hand, which is a
+  small manual eval. It was one run per product, so it confirms direction, not
+  stability. The good product's `specs_clarity` rating also flipped between fair and
+  good on the same listing, which is the reason the eval harness (Step 10 in
+  `docs/development-plan.md`) exists.
+
+**A quick checklist for next time.** After changing any check or prompt:
+
+1. Does every sentence that describes a check's result still match what the check now
+   means? (stale evidence)
+2. Does the model have to add, subtract, count or sort anything? Move it into Ruby.
+   (arithmetic)
+3. Could one piece of evidence be counted by two different ratings? Say which one owns
+   it. (scope)
+4. Run the real agent, and compare each number in the output to its source.
 
 ## Open questions / things to learn next
 - How does `little_ghost` actually expose tool-call decisions — do I get visibility

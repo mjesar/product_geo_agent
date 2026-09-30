@@ -32,11 +32,15 @@ score with the model's own explanation of the biggest gaps.
 |---|---|
 | `--verbose` | Also print each tool's full raw input and result, not just the summary — for debugging, not for a clean read |
 | `--trace` | Write a redacted, JSON-lines trace of every event (including the real request/response sent to the model) to `traces/` |
-| `--trace=PATH` | Same, but write to `PATH` instead of the default auto-generated filename |
+| `--trace-path=PATH` | Same, but write to `PATH` instead of the default auto-generated filename |
 
 ## Why
 
 Most AI-readiness "audits" are just SEO checklists with an AI label on them. This project focuses specifically on what's unique to AI discoverability: whether an LLM would actually cite or recommend the product, not just whether the page is technically well-formed.
+
+## What calibrating it found
+
+Before trusting the score, I ran the agent against three sandbox products (a full listing, a thin one and a blank one) and compared each score to what it should have been. That turned up two grounding failures in the generated explanations. The first was stale evidence: a check got stricter but the sentence describing its failure did not, so the model gave advice that was right for the old check and wrong for reality. The second was unreliable arithmetic: given correct per-item numbers, it still wrote "lost 55 points" when 75 were lost. The fix both times was to move the computation into Ruby and let the model describe only finished, already-correct results. Each fix was verified on one run per product, which confirms direction, not stability, so an eval harness is next. [Full write-up](docs/agent-concepts.md#grounding-keeping-the-models-words-tied-to-real-facts).
 
 ## Related work
 
@@ -58,12 +62,14 @@ project exposing a Shopify-style store to LLM agents.
 🚧 In development — the full pipeline works end to end: five tools, `GeoAuditAgent`
 wiring them together with a real reasoning loop, deterministic scoring, retry/backoff
 and usage tracking, and a CLI (`bin/audit`) with live visibility into what the agent
-is doing, including a redacted `--trace` file for later inspection. Next up: saving
-audit history, and a real sandbox run to calibrate the scoring weights.
+is doing, including a redacted `--trace` file for later inspection. It has been
+calibrated against real sandbox products (see above). Next up: an eval harness to
+measure how stable the agent's ratings are from run to run.
 
 ## Docs
 
 - [Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk) — diagrams: system architecture, agent decision flow, dev workflow
+- [`docs/user-guide.md`](docs/user-guide.md) — plain-language guide to what the tool does, with real audit outputs (no code reading needed)
 - [`docs/development-plan.md`](docs/development-plan.md) — step-by-step build plan, one branch/PR per step
 - [`docs/agent-concepts.md`](docs/agent-concepts.md) — running notes on agent-development concepts learned while building this
 - [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md) — how the Storefront API token was set up

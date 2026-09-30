@@ -72,13 +72,23 @@ Tools:
 5. `CheckAiCitationTool` — direct Gemini call: "would you recommend this product?" —
    run last, once full context is available
 
-System prompt strategy (not a fixed pipeline):
-> Always start with get_product_data. Use description length/quality to judge how deep
-> to go. Try check_faq_page first; if it finds nothing, try check_faq_metafield before
-> concluding there's no FAQ content. Always run check_ai_citation last. Summarize with
-> a score and the top 2-3 gaps.
+System prompt strategy (not a fixed pipeline): the agent starts with the product data,
+uses the description to judge how deep to go, falls back from the FAQ page to the FAQ
+metafield before concluding there's no FAQ content, checks structured data, and runs
+the AI citation check last. It then returns three poor/fair/good ratings and no number:
+the score is computed in Ruby, and the top gaps are explained by a second, tool-free
+call.
 
-## Scoring rubric (draft weights, subject to tuning)
+The current prompt is the source of truth, not a copy here:
+`app/prompts/geo_audit/system_prompt.erb`.
+
+## Scoring rubric (weights calibrated in step 9, not changed)
+Source of truth: `WEIGHTS` in `app/services/geo_audit/score.rb`. If this table and that
+file ever differ, the file wins. Step 9 ran the rubric against real sandbox products and
+fixed leaks in the checks and prompts, but the weights themselves are unchanged from the
+original draft. Three items (description, buyer questions, specs) are rated
+poor/fair/good by the model (none, half or full points); the rest are computed in code.
+
 | Check                              | Weight |
 |-------------------------------------|--------|
 | Description quality/length          | 15     |
@@ -101,16 +111,17 @@ System prompt strategy (not a fixed pipeline):
   cases (empty FAQ, no structured data, no citation found) are the actual point of
   this project's scoring logic.
 
-## Observability & evals (planned — see `docs/development-plan.md` step 8.4 and step 10)
+## Observability & evals (observability built in step 8.4, evals planned in step 10, see `docs/development-plan.md`)
 RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
 They prove nothing about two other things that matter for an agentic system, and both
-are real gaps here, not just nice-to-haves:
-- **Observability** — right now a completed audit run only shows the final score.
-  There's no visibility into which tools the agent called, in what order, with what
-  arguments, how long each took, or where it failed. Planned fix (step 8.4,
-  `audit-visibility`): a reporter object that every part of an audit announces events
-  to, so a run produces a readable live trace, useful for debugging during
-  development and for showing the agent's actual behavior, not just the final score.
+were real gaps here, not just nice-to-haves:
+- **Observability** — built in step 8.4 (`audit-visibility`, plus the
+  `reporter-redesign` follow-up). Before it, a completed audit run only showed the final
+  score, with no visibility into which tools the agent called, in what order, with what
+  arguments, how long each took, or where it failed. Now a reporter object receives an
+  event from every part of an audit, so `bin/audit` prints a readable live trace (and
+  `--verbose` / `--trace` go deeper), useful for debugging during development and for
+  showing the agent's actual behavior, not just the final score.
 - **Evals** — RSpec can't tell you whether the agent's *judgment* is any good (is the
   score right, are the flagged gaps the actual gaps), only whether the code ran
   without crashing. Planned fix: a small hand-scored ground-truth set (5-8 real
