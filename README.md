@@ -1,10 +1,14 @@
-# ProductGeoAgent
+# ProductGeoAgent: a GEO/AEO audit agent for Shopify products
 
-[![CI](https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml)
+[![CI status](https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml)
 
-A Ruby on Rails CLI agent that rates how AI-discoverable a Shopify product is (GEO/AEO) — whether AI shopping assistants (ChatGPT, Gemini, Perplexity, AI Overviews) would actually surface, recommend, or cite it.
+**ProductGeoAgent is an agentic generative AI tool that checks whether AI shopping assistants (ChatGPT, Gemini, Perplexity, Google AI Overviews) can find, understand and recommend a Shopify product.** It is a Ruby on Rails command-line agent that scores a product's AI discoverability from 0 to 100 and names the top gaps to fix.
 
-Built as a hands-on agent-development learning project using the [`little_ghost`](https://github.com/littleghostai/little_ghost) Ruby gem.
+Built as a hands-on agentic AI learning project in Ruby, using the [`little_ghost`](https://github.com/littleghostai/little_ghost) gem for tool calling and Gemini as the model.
+
+## What are GEO and AEO?
+
+**GEO (generative engine optimization)** means making your content easy for generative AI tools such as ChatGPT, Gemini and Perplexity to understand, quote and recommend. **AEO (answer engine optimization)** is the same idea aimed at direct answers: a clear FAQ, specific product details and machine-readable markup (schema.org JSON-LD) give an assistant something concrete to cite. Classic SEO is about ranking in a list of links. GEO and AEO are about being the answer.
 
 ## What it does
 
@@ -17,6 +21,8 @@ Give it a product from a Shopify store, and the agent:
 5. Synthesizes all of the above into a discoverability score with the top priority gaps to fix
 
 The agent decides which checks to run and in what order — it isn't a fixed pipeline. If a product's description is already strong, it can skip deeper checks; if the FAQ page check comes back empty, it tries the metafield fallback before concluding there's no FAQ content at all.
+
+Seven checks make up the 0 to 100 score: description quality, buyer questions answered, image alt text, variant and spec clarity, FAQ content, structured data, and whether an AI assistant would recommend the product. The [user guide](docs/user-guide.md) walks through each one with real audit output.
 
 **[→ Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk)** — diagrams of the system architecture, the agent's decision flow, and the dev workflow used to build this.
 
@@ -40,6 +46,29 @@ score with the model's own explanation of the biggest gaps.
 
 Most AI-readiness "audits" are just SEO checklists with an AI label on them. This project focuses specifically on what's unique to AI discoverability: whether an LLM would actually cite or recommend the product, not just whether the page is technically well-formed.
 
+## Frequently asked questions
+
+**How do I check whether ChatGPT or other AI assistants can recommend my Shopify product?**
+Run `bin/audit PRODUCT_HANDLE`. The agent reads the product through the Shopify Storefront API, checks FAQ content and structured data, asks an LLM whether it would recommend the product, and returns a 0 to 100 score with the top gaps to fix. It measures how well a listing is set up, not whether an assistant will actually recommend it.
+
+**What is AI discoverability?**
+How easily AI assistants can find, understand and cite a product. It depends on a specific description, answers to common buyer questions, FAQ content and machine-readable structured data.
+
+**Does structured data (JSON-LD) help AI search?**
+It gives software a clean, machine-readable description of the product, which is why the tool checks for it. This tool cannot prove that any particular assistant uses it, so the score treats it as one signal out of seven, not a guarantee.
+
+**Why is the "would an AI recommend it" check usually zero?**
+For a small or unknown store, assistants rarely name the product when asked an open buyer question. That is the honest result, not a bug.
+
+**Does it change my store?**
+No. It only reads, through the Shopify Storefront API.
+
+**Is it a fixed checklist or a real AI agent?**
+A real agent. A model picks the next check after each result, using tool calling. For example, it looks at the product's own FAQ field only when no FAQ page is found.
+
+**Can I trust the score?**
+Partly. The arithmetic is plain Ruby, so the same facts always give the same score. Three items (description, buyer questions, specs) are rated by the model and can vary from run to run, and an eval harness to measure that is planned. See the next section.
+
 ## What calibrating it found
 
 Before trusting the score, I ran the agent against three sandbox products (a full listing, a thin one and a blank one) and compared each score to what it should have been. That turned up two grounding failures in the generated explanations. The first was stale evidence: a check got stricter but the sentence describing its failure did not, so the model gave advice that was right for the old check and wrong for reality. The second was unreliable arithmetic: given correct per-item numbers, it still wrote "lost 55 points" when 75 were lost. The fix both times was to move the computation into Ruby and let the model describe only finished, already-correct results. Each fix was verified on one run per product, which confirms direction, not stability, so an eval harness is next. [Full write-up](docs/agent-concepts.md#grounding-keeping-the-models-words-tied-to-real-facts).
@@ -55,7 +84,7 @@ project exposing a Shopify-style store to LLM agents.
 
 - Ruby on Rails
 - [`little_ghost`](https://github.com/littleghostai/little_ghost) for the agent/tool-calling loop
-- Gemini API (free tier) as the model provider
+- Gemini API (generative AI model, free tier) as the model provider
 - Shopify Storefront GraphQL API (read-only, no OAuth app install required)
 - PostgreSQL
 
