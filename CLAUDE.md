@@ -72,13 +72,23 @@ Tools:
 5. `CheckAiCitationTool` — direct Gemini call: "would you recommend this product?" —
    run last, once full context is available
 
-System prompt strategy (not a fixed pipeline):
-> Always start with get_product_data. Use description length/quality to judge how deep
-> to go. Try check_faq_page first; if it finds nothing, try check_faq_metafield before
-> concluding there's no FAQ content. Always run check_ai_citation last. Summarize with
-> a score and the top 2-3 gaps.
+System prompt strategy (not a fixed pipeline): the agent starts with the product data,
+uses the description to judge how deep to go, falls back from the FAQ page to the FAQ
+metafield before concluding there's no FAQ content, checks structured data, and runs
+the AI citation check last. It then returns three poor/fair/good ratings and no number:
+the score is computed in Ruby, and the top gaps are explained by a second, tool-free
+call.
 
-## Scoring rubric (draft weights, subject to tuning)
+The current prompt is the source of truth, not a copy here:
+`app/prompts/geo_audit/system_prompt.erb`.
+
+## Scoring rubric (weights calibrated in step 9, not changed)
+Source of truth: `WEIGHTS` in `app/services/geo_audit/score.rb`. If this table and that
+file ever differ, the file wins. Step 9 ran the rubric against real sandbox products and
+fixed leaks in the checks and prompts, but the weights themselves are unchanged from the
+original draft. Three items (description, buyer questions, specs) are rated
+poor/fair/good by the model (none, half or full points); the rest are computed in code.
+
 | Check                              | Weight |
 |-------------------------------------|--------|
 | Description quality/length          | 15     |
