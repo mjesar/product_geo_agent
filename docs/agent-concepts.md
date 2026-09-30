@@ -132,9 +132,9 @@ These get used interchangeably but mean different things:
 
 **What belongs in code vs. in the model**
 
-Right now, `system_prompt.erb` asks the model to calculate the final score out of 100
+Originally, `system_prompt.erb` asked the model to calculate the final score out of 100
 itself, by reading the rubric table and doing the weighted arithmetic in its head.
-That's the wrong split of responsibility: arithmetic is exactly the kind of thing a
+That was the wrong split of responsibility: arithmetic is exactly the kind of thing a
 language model is bad at being *consistent* about — the same tool results could produce
 a slightly different score on two different runs, since nothing about token-by-token
 generation guarantees the same arithmetic twice.
