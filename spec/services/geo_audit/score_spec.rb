@@ -77,15 +77,15 @@ RSpec.describe GeoAudit::Score do
         expect(alt_text.detail).to eq("2 of 4 images have alt text")
       end
 
-      it "gives full credit when there are no images to check" do
+      it "gives zero credit when the product has no images" do
         result = described_class.new(
           tool_results: tool_results(get_product_data: { images: [] }),
           ratings: ratings
         ).call
 
         alt_text = item(result, :alt_text)
-        expect(alt_text.points).to eq(10.0)
-        expect(alt_text.detail).to eq("no images to check")
+        expect(alt_text.points).to eq(0.0)
+        expect(alt_text.detail).to eq("no images")
       end
     end
 
