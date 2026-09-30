@@ -58,10 +58,10 @@ how busy the model service is.
 | `--trace` | Saves a redacted, line-by-line record of the whole run to the `traces/` folder. |
 | `--trace-path=PATH` | Same, but saves to a path you choose. |
 
-> [Diagram spot: how an audit runs. The agent looks at the product, then picks the next
-> check after each result. Show the FAQ fallback as a branch: FAQ page found, skip the
-> second lookup; FAQ page empty, try the product field before giving up. End with the
-> AI citation check, then the score.]
+To see how an audit runs, step by step, including the two points where the agent makes
+a real decision (how hard to look, and whether to try the FAQ fallback), open the
+[architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk). It also marks
+which of those decisions have been seen in a real run.
 
 ## Reading one real output
 

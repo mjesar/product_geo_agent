@@ -266,9 +266,10 @@ evidence. When a check's meaning changes, every sentence describing its result h
 change too, and a spec should pin the wording (`spec/services/geo_audit/score_spec.rb`
 checks the exact text for both the "incomplete" and "nothing at all" cases).
 
-> [Diagram spot 1: a timeline. The check changes from "Product block exists" to
-> "Product block is complete", while the failure sentence stays the same. Mark the point
-> where the model's advice goes wrong.]
+![Timeline of the stale-evidence failure: the check gets stricter, the failure text does not change, and the model's advice goes wrong](structured-data-stale-evidence-timeline.png)
+
+*The check changed at step 2, but the sentence describing its failure (step 3) did
+not, so the model's advice at step 4 was right for the old check and wrong for reality.*
 
 **Failure 2: it added the numbers up wrong.** The model was given correct per-item
 points and still wrote things like "losing 55 points" when 75 had been lost, and "30
@@ -312,7 +313,7 @@ them. On the three sandbox products, every number the explanation quoted then ma
 the breakdown (total points lost 20, 52 and 75), and the model never tried to add the
 per-item losses together.
 
-![How a score becomes an explanation: Ruby works out each item's points, the points lost and the sorted gaps, then the model only writes the words](score_to_explanation_flow.png)
+![How a score becomes an explanation: Ruby works out each item's points, the points lost and the sorted gaps, then the model only writes the words](score-to-explanation-diagram.png)
 
 *The green steps are plain Ruby and give the same answer every time for the same facts.
 Only the last step is the model, and it receives finished numbers.*
