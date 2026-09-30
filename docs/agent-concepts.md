@@ -1,8 +1,12 @@
-# Agent Development Concepts — Learning Notes
+# AI agent concepts: tool calling, grounding and evals in Ruby with Gemini
 
-Running notes on agent-development concepts as I learn them while building
-`ProductGeoAgent`. Update this as new concepts come up during the build — this is the
-learning record, not just a technical doc.
+Learning notes on building an agentic generative AI tool in Ruby on Rails, with the
+[`little_ghost`](https://github.com/littleghostai/little_ghost) gem and Gemini. They
+cover what makes something an AI agent and not a single API call, how tool calling and
+system prompts work, how to keep a model's output grounded in real facts, and how evals
+differ from tests. Every concept is explained with a real example from `ProductGeoAgent`,
+a GEO/AEO audit agent for Shopify products. Update this as new concepts come up during
+the build. It is the learning record, not just a technical doc.
 
 ## What makes something an "agent" vs. a single API call
 
