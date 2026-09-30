@@ -115,7 +115,7 @@ poor/fair/good by the model (none, half or full points); the rest are computed i
 RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
 They prove nothing about two other things that matter for an agentic system, and both
 were real gaps here, not just nice-to-haves:
-- **Observability** — built in step 8.4 (`audit-visibility`, plus the
+- **Observability**: built in step 8.4 (`audit-visibility`, plus the
   `reporter-redesign` follow-up). Before it, a completed audit run only showed the final
   score, with no visibility into which tools the agent called, in what order, with what
   arguments, how long each took, or where it failed. Now a reporter object receives an

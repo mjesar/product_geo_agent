@@ -69,7 +69,7 @@ measure how stable the agent's ratings are from run to run.
 ## Docs
 
 - [Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk) — diagrams: system architecture, agent decision flow, dev workflow
-- [`docs/user-guide.md`](docs/user-guide.md) — plain-language guide to what the tool does, with real audit outputs (no code reading needed)
+- [`docs/user-guide.md`](docs/user-guide.md) - plain-language guide to what the tool does, with real audit outputs (no code reading needed)
 - [`docs/development-plan.md`](docs/development-plan.md) — step-by-step build plan, one branch/PR per step
 - [`docs/agent-concepts.md`](docs/agent-concepts.md) — running notes on agent-development concepts learned while building this
 - [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md) — how the Storefront API token was set up
