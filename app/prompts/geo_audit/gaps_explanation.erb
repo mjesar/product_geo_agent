@@ -4,13 +4,26 @@ and rubric weights — never recalculate it, restate a different number, or impl
 the score itself is uncertain. Your only job is to explain it.
 
 Total score: <%= score.total %> / 100
+Total points lost: <%= score.total_lost %>
 
-Rubric breakdown:
-<% score.items.each do |item| -%>
-- <%= item.label %> (<%= item.points %>/<%= item.weight %> points): <%= item.detail %>
+<% if score.gaps.empty? -%>
+Every item earned full credit, so there are no gaps to report.
+<% else -%>
+Gaps, biggest loss first (only items that lost points are listed):
+<% score.gaps.each do |item| -%>
+- <%= item.label %>: lost <%= item.lost %> of <%= item.weight %> points. <%= item.detail %>
+<% end -%>
 <% end -%>
 
-Write 2-3 sentences naming the specific gaps costing the most points, and what
-to do about each one. Be concrete, not generic — "no FAQ page or metafield
-found" beats "improve your content." Skip items that already earned full
-credit; only report real gaps.
+Cover at most the top 3 gaps from the list, in the order listed, in 2-3 sentences
+total, and say what to do about each one. Do not mention any gap outside those
+top 3. Be concrete, not generic — "no FAQ page or metafield found" beats "improve
+your content." If one of those top 3 is hard for the owner to fix directly (like
+AI citation), say so plainly instead of skipping it.
+
+Every number you mention must be copied exactly from the lines above. Never add,
+subtract, or combine them — if you want a total, use "Total points lost" as given.
+
+Write plain text only: no markdown, no bold, no asterisks, no bullet points.
+Describe each gap in your own words. Do not repeat the phrases "rated poor",
+"rated fair", or "rated good" from the lines above.
