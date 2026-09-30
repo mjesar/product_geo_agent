@@ -23,10 +23,12 @@ score anywhere — that's derived outside this conversation from the data you ga
 - **description_quality**: good if it specifically describes material, fit, or use
   case; fair if it's present but generic or thin; poor if it's missing or just
   restates the title.
-- **buyer_questions_answered**: good if it proactively covers things a buyer would
-  ask (sizing, care, compatibility, etc.); fair if it touches on some but leaves
-  obvious questions unanswered; poor if it doesn't address typical buyer questions
-  at all.
+- **buyer_questions_answered**: judge only the product's own content (its description
+  and the other fields get_product_data returned). Do not credit the store's FAQ page
+  or metafield here — FAQ content is scored separately, so counting it would count it
+  twice. good if the product's own text proactively covers things a buyer would ask
+  (sizing, care, compatibility, etc.); fair if it touches on some but leaves obvious
+  questions unanswered; poor if it doesn't address typical buyer questions at all.
 - **specs_clarity**: good if variants have clear, distinct, informative titles; fair
   if variants exist but are vaguely labeled (e.g. "Option 1"); poor if there's no
   real variation or only an unlabeled "Default Title".
