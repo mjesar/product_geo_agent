@@ -1,15 +1,24 @@
-# User guide: what the product audit does
+# User guide: how to check whether AI assistants can recommend your Shopify product
 
-This guide is for someone who wants to know what this tool does and what its results
-look like, without reading any code. Every output shown below is a real run against a
-real (sandbox) Shopify store, not a mock-up.
+This guide shows store owners, and anyone evaluating the project, how to check whether
+AI shopping assistants (ChatGPT, Gemini, Perplexity) can find and recommend a Shopify
+product using this tool. You do not need to read any code. Every output shown below is a
+real run against a real (sandbox) Shopify store, not a mock-up.
 
-## What this is
+## What is AI discoverability, and what does this tool do?
 
 More and more shoppers ask an AI assistant (ChatGPT, Gemini, Perplexity and so on) what
 to buy, instead of searching a store. Whether a product shows up in those answers
 depends on whether the assistant can understand it: is there a real description, are the
 common buyer questions answered, is the page marked up so software can read it?
+
+Making a product easy for AI assistants to find and recommend is called **generative
+engine optimization (GEO)** or **answer engine optimization (AEO)**. It is the AI-era
+cousin of SEO: instead of trying to rank in a list of links, you are trying to be the
+answer the assistant gives. **AI discoverability** is how well a product is set up for
+that. **Structured data** (schema.org JSON-LD) is machine-readable markup on the product
+page that tells software the product's name, description and price without guessing from
+the page layout.
 
 This tool takes one product from a Shopify store and scores out of 100 how well it is
 set up for that. It then names the biggest gaps in plain English, so the store owner
@@ -19,7 +28,7 @@ The "agent" part: the tool is not a fixed checklist. An AI model decides which c
 run next based on what it has found so far. For example, if the store has no FAQ page,
 it looks for FAQ content somewhere else before concluding there is none.
 
-## What it checks
+## What does the audit check?
 
 Seven things, worth 100 points in total:
 
@@ -38,7 +47,7 @@ a small or unknown store, because assistants simply do not know the product yet,
 is the honest answer, not a bug. And only three of the seven are judged by the model. The
 rest, and the final number, are plain code, so the same facts always give the same score.
 
-## How to run it
+## How do I run an audit?
 
 You need a Shopify store with a read-only Storefront API token and a Gemini API key
 (the free tier is enough). Setup, including the environment variables, is in the
@@ -63,7 +72,7 @@ a real decision (how hard to look, and whether to try the FAQ fallback), open th
 [architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk). It also marks
 which of those decisions have been seen in a real run.
 
-## Reading one real output
+## How do I read the results? A real example
 
 This is the latest run on a product whose listing was written properly. The numbers in
 square brackets are explained underneath.
@@ -117,7 +126,7 @@ square brackets are explained underneath.
    is an example of the model's advice being worth reading critically.)
 7. **Cost of the run:** how many requests, how many tokens, and the total time.
 
-## Real examples, including the ones that were wrong
+## Real audit results, including the ones that were wrong
 
 I ran the tool against three products in a sandbox store, chosen to be one good listing
 (`the-complete-snowboard`, which I gave a full description), one thin listing
@@ -340,7 +349,7 @@ of [`agent-concepts.md`](agent-concepts.md#grounding-keeping-the-models-words-ti
 and the dated log of findings is in the Step 9 entry of
 [`development-plan.md`](development-plan.md).
 
-## What the score does and does not mean
+## Can I trust the score? What it does and does not mean
 
 - **It is a measure of how well a listing is set up, not a prediction of sales or of
   exact AI behavior.** Two listings with the same score can still differ.
