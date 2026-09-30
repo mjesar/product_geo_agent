@@ -101,16 +101,17 @@ System prompt strategy (not a fixed pipeline):
   cases (empty FAQ, no structured data, no citation found) are the actual point of
   this project's scoring logic.
 
-## Observability & evals (planned — see `docs/development-plan.md` step 8.4 and step 10)
+## Observability & evals (observability built in step 8.4, evals planned in step 10, see `docs/development-plan.md`)
 RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
 They prove nothing about two other things that matter for an agentic system, and both
-are real gaps here, not just nice-to-haves:
-- **Observability** — right now a completed audit run only shows the final score.
-  There's no visibility into which tools the agent called, in what order, with what
-  arguments, how long each took, or where it failed. Planned fix (step 8.4,
-  `audit-visibility`): a reporter object that every part of an audit announces events
-  to, so a run produces a readable live trace, useful for debugging during
-  development and for showing the agent's actual behavior, not just the final score.
+were real gaps here, not just nice-to-haves:
+- **Observability** — built in step 8.4 (`audit-visibility`, plus the
+  `reporter-redesign` follow-up). Before it, a completed audit run only showed the final
+  score, with no visibility into which tools the agent called, in what order, with what
+  arguments, how long each took, or where it failed. Now a reporter object receives an
+  event from every part of an audit, so `bin/audit` prints a readable live trace (and
+  `--verbose` / `--trace` go deeper), useful for debugging during development and for
+  showing the agent's actual behavior, not just the final score.
 - **Evals** — RSpec can't tell you whether the agent's *judgment* is any good (is the
   score right, are the flagged gaps the actual gaps), only whether the code ran
   without crashing. Planned fix: a small hand-scored ground-truth set (5-8 real
