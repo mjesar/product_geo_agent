@@ -52,8 +52,10 @@ module GeoAudit
       images = @tool_results.dig(:get_product_data, :images) || []
       weight = WEIGHTS.fetch(:alt_text)
       with_alt = images.count { |alt_text| alt_text.present? }
-      fraction = images.empty? ? 1.0 : with_alt / images.size.to_f
-      detail = images.empty? ? "no images to check" : "#{with_alt} of #{images.size} images have alt text"
+      # No images means nothing for an AI assistant to read or describe, which
+      # is worse for discoverability than images without alt text, not neutral.
+      fraction = images.empty? ? 0.0 : with_alt / images.size.to_f
+      detail = images.empty? ? "no images" : "#{with_alt} of #{images.size} images have alt text"
 
       Item.new(key: :alt_text, label: "Alt text on images", weight:, points: weight * fraction, detail:)
     end
@@ -69,7 +71,7 @@ module GeoAudit
 
     def structured_data_item
       result = @tool_results.fetch(:check_structured_data, {})
-      found = result[:product_schema] || result[:faq_schema]
+      found = result[:product_schema_complete] || result[:faq_schema]
 
       boolean_item(
         :structured_data, "Structured data (Product/FAQPage)", found:,

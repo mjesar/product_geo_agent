@@ -32,7 +32,13 @@ module GeoAudit
     end
 
     def structured_data(value)
-      "Product schema: #{value[:product_schema] ? "yes" : "no"} · FAQ schema: #{value[:faq_schema] ? "yes" : "no"}"
+      product =
+        if value[:product_schema_complete] then "yes"
+        elsif value[:product_schema] then "incomplete"
+        else "no"
+        end
+
+      "Product schema: #{product} · FAQ schema: #{value[:faq_schema] ? "yes" : "no"}"
     end
 
     def ai_citation(value)
