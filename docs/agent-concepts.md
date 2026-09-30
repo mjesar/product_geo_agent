@@ -312,10 +312,10 @@ them. On the three sandbox products, every number the explanation quoted then ma
 the breakdown (total points lost 20, 52 and 75), and the model never tried to add the
 per-item losses together.
 
-> [Diagram spot 2: the gaps flow. Item results, then `Item#lost`, then `Result#gaps`
-> (filter and sort), then the prompt, then the model, then the explanation. Shade the
-> Ruby steps and the model step differently, so it is obvious the model only receives
-> finished numbers.]
+![How a score becomes an explanation: Ruby works out each item's points, the points lost and the sorted gaps, then the model only writes the words](score_to_explanation_flow.png)
+
+*The green steps are plain Ruby and give the same answer every time for the same facts.
+Only the last step is the model, and it receives finished numbers.*
 
 **A third, related cause: an instruction that was too vague.** The store has one FAQ
 page, and it already earns its own 15 points under `faq_content`. The instruction for
@@ -327,9 +327,10 @@ product's own content), and the next run matched the prediction exactly: 85 / 48
 This was neither stale evidence nor bad arithmetic. The wording let evidence from one
 check leak into another rating.
 
-> [Diagram spot 3: the FAQ double-counting. One "FAQ page" box with two arrows: one into
-> `faq_content`, where it belongs, and a second, wrong one into
-> `buyer_questions_answered`. Mark the second arrow as the bug.]
+![The store FAQ page feeds faq_content correctly, but was also counted a second time in buyer_questions_answered](faq_double_counting_bug.png)
+
+*The green arrow is the FAQ page earning its own 15 points. The red dashed arrow is the
+bug: the same page also boosted the 20-point buyer-questions rating.*
 
 **How this connects to the rest of this file.**
 
