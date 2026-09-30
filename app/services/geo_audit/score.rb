@@ -12,8 +12,35 @@ module GeoAudit
 
     RATING_POINTS = { "poor" => 0.0, "fair" => 0.5, "good" => 1.0 }.freeze
 
-    Item = Data.define(:key, :label, :weight, :points, :detail)
-    Result = Data.define(:total, :items)
+    Item = Data.define(:key, :label, :weight, :points, :detail) do
+      # Points this item failed to earn. Computed here in Ruby so the explanation
+      # never has to subtract (or add) numbers itself. Rounded to one decimal
+      # because partial credit can produce float noise (3.3333333333333335), and
+      # whole numbers come back as integers so they print as "10", not "10.0".
+      def lost
+        missing = (weight - points).round(1)
+        (missing == missing.to_i) ? missing.to_i : missing
+      end
+    end
+
+    Result = Data.define(:total, :items) do
+      # Only the items that lost points, biggest loss first. Ties keep rubric
+      # order: sort_by isn't stable in Ruby, so the original index is part of
+      # the sort key to keep the order the same from run to run.
+      def gaps
+        items.each_with_index
+             .select { |item, _index| item.lost.positive? }
+             .sort_by { |item, index| [ -item.lost, index ] }
+             .map(&:first)
+      end
+
+      # Derived from the rounded total, not by summing each item's loss, so the
+      # two headline numbers always add up to 100 (77.5 rounds to 78, and summing
+      # the items' losses would say 22.5, which is 101 together).
+      def total_lost
+        WEIGHTS.values.sum - total
+      end
+    end
 
     def initialize(tool_results:, ratings:)
       @tool_results = tool_results.deep_symbolize_keys
@@ -73,10 +100,19 @@ module GeoAudit
       result = @tool_results.fetch(:check_structured_data, {})
       found = result[:product_schema_complete] || result[:faq_schema]
 
+      # An empty Product block is a different fix (fill in the product's own
+      # description) from no markup at all (add schema), so say which one it is.
+      detail_false =
+        if result[:product_schema]
+          "Product schema is present but has no description or offers"
+        else
+          "no Product/FAQPage structured data found"
+        end
+
       boolean_item(
         :structured_data, "Structured data (Product/FAQPage)", found:,
         detail_true: "structured data found: #{Array(result[:schema_types_found]).join(', ')}",
-        detail_false: "no Product/FAQPage structured data found"
+        detail_false:
       )
     end
 
