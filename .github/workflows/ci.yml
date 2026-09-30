@@ -99,7 +99,9 @@ jobs:
       # This project uses RSpec, not Rails' default minitest runner. The specs stub
       # every external call, and the app only needs GEMINI_API_KEY to exist at boot
       # (config/initializers/little_ghost.rb), so a placeholder is enough here. Specs
-      # tagged :live are excluded by default and never run in CI.
+      # tagged :live are excluded by default and never run in CI. The app has no
+      # tables yet (no db/schema.rb), so db:create makes an empty test database
+      # instead of db:test:prepare, which needs a schema to load.
       - name: Run tests
         env:
           RAILS_ENV: test
@@ -108,5 +110,5 @@ jobs:
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: |
-          bin/rails db:test:prepare
+          bin/rails db:create
           bundle exec rspec
