@@ -266,15 +266,112 @@ agent-concept work. Chat mode (typed English routed to a command) was floated as
 later, unscheduled idea that would have used 8.5-8.7's CLI commands as its own tools
 — shelved along with them, not a loss since it was never committed to.
 
-## ⬜ Step 9 — Real sandbox run + scoring calibration
+## ✅ Step 9 — Real sandbox run + scoring calibration
 No new branch necessarily — likely small fixup commits/PRs as needed. Runs after
 Step 8 completes, since calibration is much easier to watch with 8.4's live output
 in hand than by guessing from a silent final score.
-- Run against 3-5 real sandbox products
-- Sanity-check the scoring weights actually produce sensible-feeling results
+- Run against 3-5 real sandbox products (done: 3, chosen to be a good, a middling and
+  a bad listing, see below)
+- Sanity-check the scoring weights actually produce sensible-feeling results (done,
+  and the weights themselves were **not** changed; the problems were leaks in the
+  checks and the prompts, not the 15/20/10 numbers)
 - Add FAQ content to the sandbox store manually (per the known-limitations note in
   `CLAUDE.md`) so both FAQ branches get exercised in a real run, not just in specs
+  (partly done: a store FAQ page was added, so the "page found" branch has run for
+  real. The metafield fallback has **not** run live yet)
 - Update `docs/agent-concepts.md` with what was learned from watching real traces
+  (see the new grounding section there)
+
+### What calibration found
+
+The three test products, all in the sandbox store: `the-complete-snowboard` (I wrote
+a full description, so the "good" one), `the-videographer-snowboard` (three short
+sentences, the "middling" one) and `the-out-of-stock-snowboard` (left blank, the
+"bad" one). Scores from each round of runs:
+
+| Round | Good | Middling | Bad | What changed |
+|---|---|---|---|---|
+| Baseline | 65 | 33 | 25 | no FAQ page in the store yet |
+| FAQ page added | 85 | 68 | 50 | expected 80 / 48 / 40, so something was wrong |
+| After fix 1 (PR #17) | 85 | 48 | 40 | matched the prediction |
+| After fix 2 (PR #18) | not re-run | not re-run | 25 | only the blank product was re-run |
+| After fixes 3 and 4 (PR #19) | 80 | 48 | 25 | good product dropped 5, see the caveats |
+
+Four separate problems, each found by comparing a real score to what it should have
+been:
+
+**1. The store FAQ page was counted twice** (PR #17, prompt fix, verified)
+- *Plain version:* the store has one FAQ page that answers questions for the whole
+  store. The model used it again when judging whether each *product's own text*
+  answers buyer questions, so every product got extra credit for something the
+  product itself never said.
+- *Example:* the middling product has three short sentences and no sizing or care
+  info, yet its score jumped from 33 to 68 the moment the FAQ page existed. The FAQ
+  page itself is only worth 15 of those 35 points; working back through the weights,
+  the rest could only have come from the buyer-questions rating going from poor to
+  good.
+- *Fix:* one bullet in `app/prompts/geo_audit/system_prompt.erb` now says to judge
+  only the product's own content and not to credit the FAQ page, since it already
+  earns its own 15 points.
+- *Verified:* predicted 85 / 48 / 40, got 85 / 48 / 40.
+- *Kind of problem:* an ambiguous instruction, not a wrong rule. The sentence never
+  said what "it" meant, so the model used the most noticeable evidence it had.
+
+**2. Two checks handed out points every product gets** (PR #18, code fix)
+- *Plain version:* Shopify themes put a Product block in every product page, even
+  when its description is empty. The old check only asked "does a Product block
+  exist?", so a blank product earned the full 15 structured-data points. Separately,
+  a product with no images got full alt-text credit, which is backwards.
+- *Example:* `the-out-of-stock-snowboard` has an empty description, and its Product
+  block had an empty description too, yet it scored 15 for structured data.
+- *Fix:* `app/services/geo_audit/structured_data_check.rb` now returns
+  `product_schema_complete`, true only when the block has a description and offers.
+  `app/services/geo_audit/score.rb` (`structured_data_item`, `alt_text_item`) uses
+  it, and no images now scores 0. The same change made the parser handle JSON-LD
+  that arrives as a list or inside an `@graph` wrapper, which used to crash it.
+- *Verified:* the blank product went from 40 to 25 (only that product was re-run).
+
+**3. The failure text went stale** (PR #19, code fix, verified)
+- *Plain version:* after the check above got stricter, the sentence describing its
+  failure still said "no structured data found". The model read that sentence and
+  reasoned correctly from it, but it was no longer true: the markup existed, just
+  empty.
+- *Example:* the blank product's explanation told the owner to "implement proper
+  JSON-LD schema markup", when the real fix was to fill in the description.
+- *Fix:* `score.rb` now says "Product schema is present but has no description or
+  offers" for that case, and `app/services/geo_audit/tool_summary.rb` prints
+  "Product schema: incomplete" in the terminal.
+- *Verified:* the next explanation said to add a description and offers to the
+  existing schema.
+- *Kind of problem:* a grounding failure caused by stale evidence. This is not the
+  model inventing something from nothing; it described reality wrongly because the
+  text it was given no longer matched reality.
+
+**4. The model added up numbers wrong** (PR #19, code fix, verified)
+- *Plain version:* the explanation step was given correct per-item points and still
+  summed them wrong in its prose.
+- *Example:* it wrote "losing 55 points" when 75 had been lost, and "30 points" for
+  two gaps worth 35.
+- *Fix:* the arithmetic moved into Ruby, in `app/services/geo_audit/score.rb`.
+  `Item#lost` is weight minus points, `Result#gaps` lists only items that lost
+  points (biggest first, ties in rubric order) and `Result#total_lost` is
+  `100 - total`, not a sum of item losses, so the two headline numbers always add to
+  100 (a total of 77.5 rounds to 78, while the item losses sum to 22.5).
+  `app/prompts/geo_audit/gaps_explanation.erb` now lists only those gaps and tells
+  the model to copy the numbers and never add them. A follow-up capped it at three
+  gaps, plain text and no "rated poor" phrasing.
+- *Verified:* on all three products every number the model quoted matched the
+  breakdown (total lost 20, 52 and 75).
+
+### What this does not prove
+- Every fix above was confirmed on **one run per product**. That confirms direction,
+  not stability, and it does not mean the rubric is now proven correct. Step 10
+  (evals) exists to test that.
+- The good product's score dropped from 85 to 80 in the last round with nothing
+  changed on the product. The model's `specs_clarity` rating flipped between fair
+  and good (see the Step 10 entry for the evidence and its limits).
+- The weights were not tuned, only three products were run, and the FAQ metafield
+  fallback has not run against a real store yet.
 
 ## ⬜ Step 10 — Eval harness: does the agent's judgment hold up?
 Branch: `eval-harness`
