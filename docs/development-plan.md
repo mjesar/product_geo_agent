@@ -222,7 +222,7 @@ Branch: `audit-visibility`
   live, a nonexistent-handle smoke test made 4 real calls before being killed. Two
   options, not decided yet: teach the system prompt to stop early on a not-found
   result, or have `Auditor` check the handle resolves before invoking the agent at all
-- **Follow-up (🔶 in progress, branch `reporter-redesign`, not its own numbered step)**:
+- **Follow-up (✅ merged as PR #16, branch `reporter-redesign`, not its own numbered step)**:
   the first real run against `Terminal` exposed the actual problem with the original
   design — `tool_finished`'s `summary:` was just `value.to_s`, the entire raw Ruby
   hash stringified, so every tool line wrapped across several lines of unreadable
