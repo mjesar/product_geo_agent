@@ -1,6 +1,7 @@
-# Development Plan
+# Development plan: building a Ruby AI agent for Shopify GEO/AEO audits
 
-Step-by-step build plan for `ProductGeoAgent`. Each step below = one branch = one PR.
+Step-by-step build plan for `ProductGeoAgent`, an agentic generative AI tool that checks
+whether AI assistants can recommend a Shopify product. Each step below = one branch = one PR.
 Don't start a step's branch until the previous PR is merged into `master`.
 
 Status key: ⬜ not started · 🔶 in progress · ✅ merged · ⏭️ skipped (deliberate)
