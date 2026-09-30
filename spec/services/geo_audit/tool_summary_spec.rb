@@ -50,9 +50,21 @@ RSpec.describe GeoAudit::ToolSummary do
 
   describe "check_structured_data" do
     it "reports both schema flags" do
-      value = { product_schema: true, faq_schema: false, schema_types_found: [ "Product" ] }
+      value = { product_schema: true, product_schema_complete: true, faq_schema: false, schema_types_found: [ "Product" ] }
 
       expect(summary.call("check_structured_data", value)).to eq("Product schema: yes · FAQ schema: no")
+    end
+
+    it "flags a Product schema that is present but incomplete" do
+      value = { product_schema: true, product_schema_complete: false, faq_schema: false, schema_types_found: [ "Product" ] }
+
+      expect(summary.call("check_structured_data", value)).to eq("Product schema: incomplete · FAQ schema: no")
+    end
+
+    it "reports no Product schema when none is present" do
+      value = { product_schema: false, product_schema_complete: false, faq_schema: false, schema_types_found: [] }
+
+      expect(summary.call("check_structured_data", value)).to eq("Product schema: no · FAQ schema: no")
     end
   end
 

@@ -6,7 +6,9 @@ RSpec.describe GeoAudit::Score do
       get_product_data: { images: [ "wool sock detail", "wool sock top" ] },
       check_faq_page: { found: true, title: "FAQ", body: "..." },
       check_faq_metafield: { found: false, value: nil },
-      check_structured_data: { product_schema: true, faq_schema: false, schema_types_found: [ "Product" ] },
+      check_structured_data: {
+        product_schema: true, product_schema_complete: true, faq_schema: false, schema_types_found: [ "Product" ]
+      },
       check_ai_citation: { mentioned: true, question: "...", response: "..." }
     }.deep_merge(overrides)
   end
@@ -35,7 +37,7 @@ RSpec.describe GeoAudit::Score do
         get_product_data: { images: [ nil, nil ] },
         check_faq_page: { found: false },
         check_faq_metafield: { found: false },
-        check_structured_data: { product_schema: false, faq_schema: false, schema_types_found: [] },
+        check_structured_data: { product_schema: false, product_schema_complete: false, faq_schema: false, schema_types_found: [] },
         check_ai_citation: { mentioned: false }
       )
       weak_ratings = ratings(
@@ -114,10 +116,25 @@ RSpec.describe GeoAudit::Score do
     end
 
     describe "structured_data" do
+      it "gives zero credit when the Product schema is present but has no description or offers" do
+        result = described_class.new(
+          tool_results: tool_results(
+            check_structured_data: {
+              product_schema: true, product_schema_complete: false, faq_schema: false, schema_types_found: [ "Product" ]
+            }
+          ),
+          ratings: ratings
+        ).call
+
+        expect(item(result, :structured_data).points).to eq(0)
+      end
+
       it "gives full credit when only the FAQPage schema is present" do
         result = described_class.new(
           tool_results: tool_results(
-            check_structured_data: { product_schema: false, faq_schema: true, schema_types_found: [ "FAQPage" ] }
+            check_structured_data: {
+              product_schema: false, product_schema_complete: false, faq_schema: true, schema_types_found: [ "FAQPage" ]
+            }
           ),
           ratings: ratings
         ).call
@@ -128,7 +145,7 @@ RSpec.describe GeoAudit::Score do
       it "gives zero credit when no schema is present" do
         result = described_class.new(
           tool_results: tool_results(
-            check_structured_data: { product_schema: false, faq_schema: false, schema_types_found: [] }
+            check_structured_data: { product_schema: false, product_schema_complete: false, faq_schema: false, schema_types_found: [] }
           ),
           ratings: ratings
         ).call

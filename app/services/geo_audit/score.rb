@@ -69,7 +69,7 @@ module GeoAudit
 
     def structured_data_item
       result = @tool_results.fetch(:check_structured_data, {})
-      found = result[:product_schema] || result[:faq_schema]
+      found = result[:product_schema_complete] || result[:faq_schema]
 
       boolean_item(
         :structured_data, "Structured data (Product/FAQPage)", found:,
