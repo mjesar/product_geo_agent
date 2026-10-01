@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+require "optparse"
+require "fileutils"
+require_relative "../config/environment"
+
+options = { runs: 5, file: Rails.root.join("spec", "evals", "expectations.yml").to_s }
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: bin/eval [--runs N] [--file PATH] [PRODUCT_HANDLE ...]"
+  opts.on("--runs N", Integer, "audits per product (default 5)") { |n| options[:runs] = n }
+  opts.on("--file PATH", "expectations file (default spec/evals/expectations.yml)") { |path| options[:file] = path }
+end
+parser.parse!(ARGV)
+
+expectations = GeoAudit::Eval::Expectations.load(options[:file])
+handles = ARGV.empty? ? expectations.products.keys : ARGV
+abort "no products in #{options[:file]}" if handles.empty?
+
+stamp = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
+failed = false
+
+handles.each do |handle|
+  expectation = expectations.fetch(handle)
+  warn "running #{options[:runs]} audit(s) of #{handle} against real Gemini..."
+
+  progress = lambda do |run|
+    detail = run.error ? "ERROR #{run.error}" : "score #{run.score.total}, #{run.calls} requests"
+    warn "  run #{run.index}/#{options[:runs]}: #{detail}"
+  end
+  runs = GeoAudit::Eval::Runner.new(runs: options[:runs], on_run: progress).call(handle: handle)
+
+  # Saved before anything is printed, so a live run's output is never lost.
+  path = Rails.root.join("tmp", "evals", "#{stamp}-#{handle}.json")
+  FileUtils.mkdir_p(path.dirname)
+  File.write(path, JSON.pretty_generate(
+    handle: handle, at: stamp, model: GeoAuditAgent.model, git_sha: `git rev-parse --short HEAD`.strip,
+    runs: runs.map(&:to_log)
+  ))
+
+  report = GeoAudit::Eval::Report.new(expectation).call(runs)
+  puts GeoAudit::Eval::ReportFormatter.new(report).call
+  warn "raw runs saved to #{path.relative_path_from(Rails.root)}"
+  failed ||= report.failed?
+end
+
+exit(failed ? 1 : 0)
