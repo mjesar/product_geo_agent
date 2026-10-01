@@ -46,7 +46,9 @@ module GeoAudit
         meta = @drift.meta.values_at("model", "git_sha", "recorded_at").compact.join(", ")
         changes = @drift.changes.map { |change| "  #{change.key}: #{value_text(change.before)} -> #{value_text(change.after)}" }
 
-        [ "", "drift vs baseline (#{meta}):", *(changes.presence || [ "  none" ]) ]
+        unstable = ("  not compared (unstable, runs split too evenly): #{@drift.unstable.join(', ')}" if @drift.unstable.any?)
+
+        [ "", "drift vs baseline (#{meta}):", *(changes.presence || [ "  none" ]), *unstable ]
       end
 
       def result_line

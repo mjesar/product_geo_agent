@@ -88,9 +88,9 @@ RSpec.describe GeoAudit::Eval::ReportFormatter do
   describe "drift section" do
     let(:meta) { { "model" => "gemini:test", "git_sha" => "abc123", "recorded_at" => "20261001T000000Z" } }
 
-    def with_drift(changes)
+    def with_drift(changes, unstable: [])
       report = GeoAudit::Eval::Report.new(expectation).call([ run(1), run(2) ])
-      drift = GeoAudit::Eval::Drift::Result.new(meta: meta, changes: changes)
+      drift = GeoAudit::Eval::Drift::Result.new(meta: meta, changes: changes, unstable: unstable)
       described_class.new(report, drift: drift).call
     end
 
@@ -110,6 +110,13 @@ RSpec.describe GeoAudit::Eval::ReportFormatter do
       expect(text).to include("drift vs baseline")
       expect(text).to match(/drift vs baseline.*\n  none/)
       expect(text).to include("RESULT: PASS")
+    end
+
+    it "names the items that were not compared because their runs split too evenly" do
+      text = with_drift([], unstable: [ "rating:specs_clarity", "score" ])
+
+      expect(text).to include("  none")
+      expect(text).to include("not compared (unstable, runs split too evenly): rating:specs_clarity, score")
     end
 
     it "shows no drift section when there is no baseline" do

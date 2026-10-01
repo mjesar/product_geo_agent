@@ -4,6 +4,10 @@ module GeoAudit
     # It compares the typical result across runs, not single runs, so ordinary
     # run-to-run noise (one flipped rating out of five) is not reported as drift.
     # Informational only: a shift can be an improvement, so it never fails a product.
+    #
+    # An item (or the score) whose runs split too evenly has no meaningful typical value:
+    # a 3 to 2 split can come out the other way next batch, which would read as drift
+    # when it is only noise. Those are listed as unstable and not compared.
     class Drift
       RATING_RANK = Score::RATING_POINTS.keys.each_with_index.to_h.freeze
 
@@ -11,38 +15,53 @@ module GeoAudit
       # lightest judged item, specs_clarity at 10).
       SCORE_STEP = 5
 
+      # The most common value must account for at least this share of the runs, so 4 of
+      # 5 is stable and 3 of 5 is not.
+      STABLE_SHARE = 0.75
+
       Change = Data.define(:key, :before, :after)
-      Result = Data.define(:meta, :changes) do
+      Unstable = Data.define(:key)
+      Result = Data.define(:meta, :changes, :unstable) do
         def drifted?
           changes.any?
         end
       end
 
       def call(entry, report)
-        changes = report.items.filter_map { |item| item_change(entry, item) }
-        changes << score_change(entry, report)
+        outcomes = (report.items.map { |item| compare_item(entry, item) } + [ compare_scores(entry, report) ]).compact
 
-        Result.new(meta: entry.slice("model", "git_sha", "recorded_at"), changes: changes.compact)
+        Result.new(meta: entry.slice("model", "git_sha", "recorded_at"),
+                   changes: outcomes.grep(Change), unstable: outcomes.grep(Unstable).map(&:key))
       end
 
       private
 
-      def item_change(entry, item)
+      def compare_item(entry, item)
         key = "#{item.kind}:#{item.key}"
         before = entry["items"][key]
         return if before.nil?
 
+        now = item.observed.as_json
+        return Unstable.new(key: key) unless stable?(before) && stable?(now)
+
         was = typical(item.kind, before)
-        now = typical(item.kind, item.observed.as_json)
-        Change.new(key: key, before: was, after: now) unless was == now
+        is = typical(item.kind, now)
+        Change.new(key: key, before: was, after: is) unless was == is
       end
 
-      def score_change(entry, report)
-        before = median(entry["scores"])
-        after = report.median_score
-        return if before.nil? || after.nil? || (after - before).abs < SCORE_STEP
+      def compare_scores(entry, report)
+        before = entry["scores"]
+        now = report.scores
+        return if before.blank? || now.blank?
+        return Unstable.new(key: "score") unless stable?(before) && stable?(now)
 
-        Change.new(key: "score", before: before, after: after)
+        was = median(before)
+        is = median(now)
+        Change.new(key: "score", before: was, after: is) if (is - was).abs >= SCORE_STEP
+      end
+
+      def stable?(values)
+        values.tally.values.max.to_f / values.size >= STABLE_SHARE
       end
 
       # A rating's typical value is its median by rank (poor < fair < good), so a
@@ -57,8 +76,6 @@ module GeoAudit
       end
 
       def median(scores)
-        return nil if scores.blank?
-
         sorted = scores.sort
         (sorted[(sorted.size - 1) / 2] + sorted[sorted.size / 2]) / 2.0
       end
