@@ -434,9 +434,16 @@ Branch: `eval-harness`
 - **What that run does not prove:** it was an easy product (empty description, one
   `Default Title` variant), so there was almost no room for the model to vary. Five
   identical results show the harness works end to end, not that the model is stable on
-  harder products. Some facts also come from the same tools the agent calls. The
-  unstable item, `specs_clarity` on `the-complete-snowboard`, has not been run through
-  the harness yet
+  harder products. Some facts also come from the same tools the agent calls
+- **Second run: the unstable case.** `the-complete-snowboard`, with the store FAQ page
+  still hidden: 11 checks passed in all 5 runs and `specs_clarity` was `FLAKY`, fair
+  three times and good twice, so the score was 65 or 70 (min 65, median 65, max 70). The
+  flip seen by hand before is now measured by the harness. All five tools were called in
+  all five runs, so the strongest listing in the store was not audited faster. Limits: a
+  3 to 2 split from five runs cannot give the true rate, and drift on a flaky item can
+  report a change that is only noise (the typical value of a close split can flip between
+  batches), so drift should ignore items that were unstable on either side, a follow-up
+  that is not built
 - **Setup gotchas found:** a product metafield is only returned by the Storefront API
   if its definition has Storefront access switched on, and the store FAQ page is one
   store-wide page (`handle: "faq"`), so the fallback can only be exercised while it is

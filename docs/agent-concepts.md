@@ -380,7 +380,7 @@ bug: the same page also boosted the 20-point buyer-questions rating.*
 **Still open**
 - **Does the agent ever skip a check?** The system prompt tells it to use the
   description to judge how deep to go, and to skip checks on a product that is already
-  strong. No real audit so far has skipped a tool: every run has called all five. So
+  strong. No real audit so far has skipped a tool: all 15 eval audits called all five, including 5 on the strongest listing in the store. So
   the "agent decides" claim is untested in the one direction that would prove it.
   Step 10's eval harness should include a strong product and record which tools were
   called. This is something to measure there, not something to fix now.

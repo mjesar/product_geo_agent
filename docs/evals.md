@@ -129,19 +129,29 @@ improvement. The baseline is only replaced on purpose.
 
 ## What this does not prove
 
-- **It has run on easy products.** An empty description and a single `Default Title`
-  variant leave almost no room for the model to vary. Ten identical audits show the
-  harness works end to end, not that the model is stable on harder ones. The unstable
-  case that motivated all this goes through the harness next.
+- **The first product was easy.** An empty description and a single `Default Title`
+  variant leave almost no room for the model to vary, so ten identical audits there show
+  the harness works end to end, not that the model is stable.
+- **The second product showed the instability, but five runs is a small sample.** On
+  `the-complete-snowboard` (a strong listing, with the store FAQ page hidden) the other
+  eleven checks held in all five runs, while `specs_clarity` came out fair three times
+  and good twice, so the score was 65 or 70. That is the same flip seen by hand
+  before, now measured. A 3 to 2 split cannot say whether the true rate is 60/40 or
+  50/50, so it takes more runs to know how unstable the item really is.
+- **Drift on a flaky item is unreliable.** Drift compares the typical value, and for an
+  item that splits close to evenly the typical value can flip from batch to batch, which
+  would be reported as drift when it is only noise. Until drift ignores items that were
+  unstable on either side, read a drift line on a `FLAKY` item with that in mind.
 - **Two products is a small set.** Nothing here shows the rubric is right, only whether the
   agent behaves consistently with what was written down.
 - **Some facts come from the same tools the agent calls.** Checking that the agent called
   them and carried their output through is real, but it does not independently test the
   tools themselves.
 - **The expectations are a person's predictions.** If they are wrong, a pass means little.
-- **The agent has never skipped a check.** The prompt allows a strong product to be audited
-  faster, but every real run so far has called all five tools. A strong product with
-  tool expectations is where that would show up, and it is untested.
+- **The agent has not skipped a check yet.** The prompt allows a strong product to be audited
+  faster, but all 15 audits so far called all five tools, including 5 on the strongest
+  listing in the store. That is evidence against skipping on this prompt, not proof that
+  it never happens.
 
 ## Setup the store needs
 

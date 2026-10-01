@@ -73,7 +73,7 @@ and usage tracking, and a CLI (`bin/audit`) with live visibility into what the a
 is doing, including a redacted `--trace` file for later inspection. It has been
 calibrated against real sandbox products (see above). An eval harness (`bin/eval`)
 runs each product several times against hand-written expectations to measure how stable
-the agent's ratings are from run to run; it has run on one product so far.
+the agent's ratings are from run to run; it has run on two products so far.
 
 ## Docs
 
