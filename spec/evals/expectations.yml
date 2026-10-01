@@ -1,0 +1,32 @@
+# Hand-written ground truth for the eval harness (Step 10).
+# Write each product's expectations BEFORE looking at any run's output, otherwise they
+# just confirm whatever the agent said. Loaded and validated by
+# GeoAudit::Eval::Expectations, which rejects typos and unknown keys.
+#
+# Shape of one product (the handle is the key):
+#
+#   products:
+#     some-product-handle:
+#       # optional, filled in later by the harness: hash of the product's content
+#       fingerprint: "abc123"
+#
+#       # required, all three. A list of the ratings you would ACCEPT from the model:
+#       # [good] means only good, [fair, good] means either. Each from poor/fair/good.
+#       ratings:
+#         description_quality: [good]
+#         buyer_questions_answered: [fair, good]
+#         specs_clarity: [fair, good]
+#
+#       # optional, each one only checked if present. These come from the tools
+#       # (Storefront, HTTP), not the model, so give the exact expected value.
+#       facts:
+#         alt_text: { with_alt: 2, of: 3 }   # images with alt text, out of all images
+#         faq_source: metafield              # page, metafield or none
+#         structured_data: false             # Product/FAQPage markup found?
+#         ai_citation: false                 # did the AI mention the product?
+#
+#       # optional, tool names the agent must / must not call in a run
+#       tools:
+#         must_call: [check_faq_page, check_faq_metafield]
+#         must_not_call: []
+products: {}
