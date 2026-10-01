@@ -142,6 +142,52 @@ The source of truth is `WEIGHTS` in [`app/services/geo_audit/score.rb`](app/serv
 
 Calibrating the score against three sandbox products turned up two grounding failures: stale evidence (a check got stricter, but the sentence describing its failure did not) and unreliable arithmetic (the "55" above). Each fix was verified on one run per product, which confirms direction, not stability, so I built the eval harness to measure stability.
 
+## Project structure
+
+Most of the code is plain Ruby classes under `app/`. It is a Rails app only for the autoloading, config and test setup, so you can ignore the generated web folders (`app/controllers`, `app/views`, `app/javascript` and so on).
+
+```
+product_geo_agent/
+├── bin/
+│   ├── audit                      <-- run one audit: bin/audit PRODUCT_HANDLE
+│   └── eval                       <-- run the real agent several times per product and judge it
+├── app/
+│   ├── agents/
+│   │   └── geo_audit_agent.rb     <-- the agent: model, system prompt, tools and hooks wired together
+│   ├── agent_tools/               <-- the five tools the model can ask for (one file each)
+│   ├── prompts/geo_audit/
+│   │   ├── system_prompt.erb      <-- instructions that tell the agent how to work
+│   │   └── gaps_explanation.erb   <-- prompt for the second, tool-free call that explains the gaps
+│   └── services/
+│       ├── geo_audit/             <-- everything around the agent (see below)
+│       └── shopify_storefront/    <-- Storefront API client and the password-page login
+├── spec/
+│   ├── agent_tools/, agents/, services/   <-- RSpec specs, no live network calls
+│   └── evals/
+│       ├── expectations.yml       <-- what a person expects per product, written before running
+│       └── baseline.json          <-- the saved eval results that later runs are compared against
+├── docs/                          <-- guides, concepts, evals, FAQ and the build plan
+├── assets/readme/                 <-- images used by this README
+└── config/initializers/little_ghost.rb   <-- registers the Gemini provider
+```
+
+**Inside `app/services/geo_audit/`:**
+
+| File or folder | What it does |
+|---|---|
+| `auditor.rb` | Runs one full audit: checks the product exists, runs the agent, computes the score and asks for the gaps explanation |
+| `score.rb` | The rubric and the score. Plain Ruby, so the same facts always give the same number |
+| `gaps_explanation.rb` | The second model call that explains the top gaps in plain language, with no tools |
+| `product_lookup.rb` | A cheap check that the handle exists, before any model call is spent |
+| `faq_check.rb`, `structured_data_check.rb`, `citation_check.rb` | The logic behind the FAQ, structured data and AI citation tools |
+| `models.rb` | Which Gemini model is used for which job |
+| `retry_policy.rb`, `retrier.rb`, `model_error_recovery.rb` | Retry with backoff when Gemini returns a 503 or a 429 |
+| `tool_result_collector.rb`, `tool_timer.rb`, `model_call_counter.rb`, `model_call_logger.rb` | Hooks that run during the loop to collect tool results and time and count the calls |
+| `usage.rb` | Tracks Gemini calls and tokens per audit |
+| `reporter/` | Where events go: `terminal.rb` prints the live trace, `trace.rb` writes the JSON-lines file, `multi.rb` fans out, `null.rb` keeps specs quiet |
+| `redactor.rb`, `tool_summary.rb` | Hide secrets before anything is printed or saved, and turn a tool result into one readable line |
+| `eval/` | The eval harness: `runner.rb` runs the agent, `comparator.rb` checks a run against expectations, `report.rb` and `drift.rb` summarise and compare with the baseline |
+
 ## Learn more
 
 - [`docs/user-guide.md`](docs/user-guide.md): plain-language guide to what the tool does, with real audit outputs (no code reading needed)
