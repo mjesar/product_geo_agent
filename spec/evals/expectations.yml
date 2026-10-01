@@ -32,4 +32,34 @@
 #       tools:
 #         must_call: [check_faq_page, check_faq_metafield]
 #         must_not_call: []
-products: {}
+products:
+  # Metafield-fallback product. Setup when these were written: store FAQ page Hidden,
+  # custom.faq set to three plain Q&A pairs (vendor, price, single variant), description
+  # empty, one image with alt text, a single "Default Title" variant at 749.95 USD.
+  # Written from the rubric in system_prompt.erb and facts read from the store, before
+  # any eval run of this product. Facts below come from the store and the live page,
+  # not from an agent run.
+  the-collection-snowboard-liquid:
+    ratings:
+      # Description is empty, and the prompt says "poor if it's missing".
+      description_quality: { accept: [ poor ], expected: poor }
+      # Judged on the product's own content only, and there is none. The FAQ metafield
+      # is explicitly not to be counted here, but the model might leak it in (the same
+      # kind of leak fixed for the store FAQ page), so fair is tolerated, poor expected.
+      buyer_questions_answered: { accept: [ poor, fair ], expected: poor }
+      # Only an unlabeled "Default Title" variant, which the prompt calls poor. fair is
+      # tolerated because specs_clarity has been the unstable item on other products.
+      specs_clarity: { accept: [ poor, fair ], expected: poor }
+    facts:
+      alt_text: { with_alt: 1, of: 1 }
+      # The page is hidden, so the page lookup finds nothing and the metafield has content.
+      faq_source: metafield
+      # The theme emits a Product block, but without a description it is incomplete, and
+      # there is no FAQPage markup.
+      structured_data: false
+      # A sandbox product no real assistant would know.
+      ai_citation: false
+    tools:
+      # A thin description tells the agent to look harder, so all five are expected, and
+      # the metafield one only runs if the page lookup came back empty first.
+      must_call: [ get_product_data, check_faq_page, check_faq_metafield, check_structured_data, check_ai_citation ]
