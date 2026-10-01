@@ -425,6 +425,10 @@ Branch: `eval-harness`
   5. `GeoAudit::Eval::Baseline` and `Drift`: a saved summary of a previous run and a
      comparison of the typical value (median rating, most common fact, median score,
      5 points being the smallest rating step), informational and never a failure
+  6. A stability guard on `Drift`, added after the second run: an item or the score is
+     only compared when its most common value covers at least 75% of the runs on both
+     sides, otherwise it is listed as "not compared (unstable)", so a close split cannot
+     read as drift
 - **First real run:** `the-collection-snowboard-liquid`, with the store FAQ page hidden
   and a `custom.faq` metafield set, so the metafield fallback ran live for the first
   time. All 12 checks passed in all 5 runs, and a second batch of 5 (recorded as the
@@ -440,10 +444,11 @@ Branch: `eval-harness`
   three times and good twice, so the score was 65 or 70 (min 65, median 65, max 70). The
   flip seen by hand before is now measured by the harness. All five tools were called in
   all five runs, so the strongest listing in the store was not audited faster. Limits: a
-  3 to 2 split from five runs cannot give the true rate, and drift on a flaky item can
-  report a change that is only noise (the typical value of a close split can flip between
-  batches), so drift should ignore items that were unstable on either side, a follow-up
-  that is not built
+  3 to 2 split from five runs cannot give the true rate. It also exposed a flaw in the
+  first version of drift (the typical value of a close split can flip between batches
+  and read as drift), fixed by the stability guard above. Baselines are saved for both
+  products; against the second one, drift correctly reports `specs_clarity` and the
+  score as unstable and compares everything else
 - **Setup gotchas found:** a product metafield is only returned by the Storefront API
   if its definition has Storefront access switched on, and the store FAQ page is one
   store-wide page (`handle: "faq"`), so the fallback can only be exercised while it is

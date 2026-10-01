@@ -127,6 +127,20 @@ counts as drifted when it moves by 5 points or more, which is the smallest a rat
 can move it. Drift is informational and never fails a product, because a change can be an
 improvement. The baseline is only replaced on purpose.
 
+One more rule keeps it honest. A typical value only means something if the runs mostly
+agree, so an item (or the score) is only compared when its most common value covers at
+least three quarters of the runs on both sides: 4 of 5 counts, 3 of 5 does not. Anything
+that splits more evenly is listed as `not compared (unstable ...)` instead. Without this,
+a 3 to 2 split could come out the other way in the next batch and be reported as drift
+when it is only noise. On `the-complete-snowboard` it correctly leaves out `specs_clarity`
+and the score, and still compares everything else:
+
+```text
+drift vs baseline (gemini:gemini-flash-lite-latest, 152bdbd, 20261001T114632Z):
+  none
+  not compared (unstable, runs split too evenly): rating:specs_clarity, score
+```
+
 ## What this does not prove
 
 - **The first product was easy.** An empty description and a single `Default Title`
@@ -138,10 +152,9 @@ improvement. The baseline is only replaced on purpose.
   and good twice, so the score was 65 or 70. That is the same flip seen by hand
   before, now measured. A 3 to 2 split cannot say whether the true rate is 60/40 or
   50/50, so it takes more runs to know how unstable the item really is.
-- **Drift on a flaky item is unreliable.** Drift compares the typical value, and for an
-  item that splits close to evenly the typical value can flip from batch to batch, which
-  would be reported as drift when it is only noise. Until drift ignores items that were
-  unstable on either side, read a drift line on a `FLAKY` item with that in mind.
+- **Drift cannot tell you about an unstable item.** It deliberately skips them (see above),
+  so a real change in `specs_clarity` would only show up once its runs agree again. The
+  75% threshold is a judgment call, not a measured one.
 - **Two products is a small set.** Nothing here shows the rubric is right, only whether the
   agent behaves consistently with what was written down.
 - **Some facts come from the same tools the agent calls.** Checking that the agent called
