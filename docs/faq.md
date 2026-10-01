@@ -88,7 +88,7 @@ Separate what tests can prove from what they cannot. Specs with stubbed model an
 calls prove that tools, scoring and retries behave correctly, and the default suite makes
 no network calls. They cannot prove the model makes good decisions. A spec tagged `:live`
 runs the real agent against a real store and is excluded from the default run, and a
-hand-scored eval set (planned) is how judgment gets measured. See
+hand-scored eval harness (`bin/eval`) is how judgment gets measured. See
 [specs vs. evals](agent-concepts.md#specs-vs-evals).
 
 ### How can I see what an AI agent is doing while it runs?
@@ -154,7 +154,7 @@ No. It only reads, through the Shopify Storefront API.
 
 Partly. The arithmetic is plain Ruby, so the same facts always give the same score. Three
 items (description, buyer questions, specs) are rated by the model and can vary from run
-to run, and an eval harness to measure that is planned. See
+to run, and `bin/eval` measures that. See
 [what calibrating it found](../README.md#what-calibrating-it-found).
 
 ## Shopify, BigCommerce and other platforms

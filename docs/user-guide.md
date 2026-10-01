@@ -358,7 +358,7 @@ and the dated log of findings is in the Step 9 entry of
 - **The model-rated items can vary from run to run.** On the same unchanged good
   listing, the variants were rated fair, then good, then good, then fair, which moves
   the score by 5 points each time. The code-calculated items do not vary. This is the
-  main reason the next planned step is an evaluation harness that runs each product
+  main reason Step 10 built an evaluation harness (`bin/eval`) that runs each product
   several times and reports the spread.
 - **Each fix above was checked on one run per product.** That shows the direction of the
   change, not that the tool is now proven correct.

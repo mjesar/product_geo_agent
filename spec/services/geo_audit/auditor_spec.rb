@@ -94,6 +94,20 @@ RSpec.describe GeoAudit::Auditor do
       expect(gaps_explanation).to have_received(:call).with(score: score_result)
     end
 
+    context "when explain is false" do
+      it "skips the gaps explanation and returns a nil explanation" do
+        reporter = instance_double(GeoAudit::Reporter::Null, event: nil)
+        stub_collaborators(run: completed_run(state: tool_results, ratings: ratings))
+
+        result = described_class.new(reporter: reporter, explain: false).call(handle: "cozy-wool-socks")
+
+        expect(GeoAudit::GapsExplanation).not_to have_received(:new)
+        expect(reporter).not_to have_received(:event).with(:explanation, anything)
+        expect(result.explanation).to be_nil
+        expect(result.score).to eq(score_result)
+      end
+    end
+
     it "returns the run, score, and explanation together" do
       run = completed_run(state: tool_results, ratings: ratings)
       stub_collaborators(run: run, explanation: "Add a FAQ page.")

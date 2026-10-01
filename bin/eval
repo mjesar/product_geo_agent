@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+require "optparse"
+require "fileutils"
+require_relative "../config/environment"
+
+options = {
+  runs: 5, save_baseline: false,
+  file: Rails.root.join("spec", "evals", "expectations.yml").to_s,
+  baseline: Rails.root.join("spec", "evals", "baseline.json").to_s
+}
+parser = OptionParser.new do |opts|
+  opts.banner = "usage: bin/eval [--runs N] [--file PATH] [--baseline PATH] [--save-baseline] [PRODUCT_HANDLE ...]"
+  opts.on("--runs N", Integer, "audits per product (default 5)") { |n| options[:runs] = n }
+  opts.on("--file PATH", "expectations file (default spec/evals/expectations.yml)") { |path| options[:file] = path }
+  opts.on("--baseline PATH", "baseline to compare against (default spec/evals/baseline.json)") do |path|
+    options[:baseline] = path
+  end
+  opts.on("--save-baseline", "after the run, record it as the new baseline for each product") do
+    options[:save_baseline] = true
+  end
+end
+parser.parse!(ARGV)
+
+expectations = GeoAudit::Eval::Expectations.load(options[:file])
+handles = ARGV.empty? ? expectations.products.keys : ARGV
+abort "no products in #{options[:file]}" if handles.empty?
+
+stamp = Time.now.utc.strftime("%Y%m%dT%H%M%SZ")
+failed = false
+baseline = GeoAudit::Eval::Baseline.new(options[:baseline])
+
+handles.each do |handle|
+  expectation = expectations.fetch(handle)
+  warn "running #{options[:runs]} audit(s) of #{handle} against real Gemini..."
+
+  progress = lambda do |run|
+    detail = run.error ? "ERROR #{run.error}" : "score #{run.score.total}, #{run.calls} requests"
+    warn "  run #{run.index}/#{options[:runs]}: #{detail}"
+  end
+  runs = GeoAudit::Eval::Runner.new(runs: options[:runs], on_run: progress).call(handle: handle)
+
+  # Saved before anything is printed, so a live run's output is never lost.
+  path = Rails.root.join("tmp", "evals", "#{stamp}-#{handle}.json")
+  FileUtils.mkdir_p(path.dirname)
+  File.write(path, JSON.pretty_generate(
+    handle: handle, at: stamp, model: GeoAuditAgent.model, git_sha: `git rev-parse --short HEAD`.strip,
+    runs: runs.map(&:to_log)
+  ))
+
+  report = GeoAudit::Eval::Report.new(expectation).call(runs)
+  entry = baseline.entry_for(handle)
+  drift = GeoAudit::Eval::Drift.new.call(entry, report) if entry && report.completed.positive?
+  puts GeoAudit::Eval::ReportFormatter.new(report, drift: drift).call
+  warn "no baseline for #{handle} yet (run with --save-baseline to record one)" unless entry
+  if options[:save_baseline] && report.completed.positive?
+    baseline.save(report, model: GeoAuditAgent.model, git_sha: `git rev-parse --short HEAD`.strip, at: stamp)
+    warn "baseline for #{handle} saved to #{options[:baseline]}"
+  end
+  warn "raw runs saved to #{path.relative_path_from(Rails.root)}"
+  failed ||= report.failed?
+end
+
+exit(failed ? 1 : 0)

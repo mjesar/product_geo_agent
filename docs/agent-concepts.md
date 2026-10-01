@@ -213,7 +213,7 @@ distinct rather than expecting one to stand in for the other:
   final score reasonable? These aren't deterministic, an LLM can make a different
   (even correct) choice on a different run, so no mock can honestly answer them —
   only real runs against real products, compared to a hand-scored expectation (the
-  planned eval harness, step 10), can.
+  eval harness, step 10), can.
 
 `GeoAuditAgent`'s own spec suite reflects this split: `geo_audit_agent_spec.rb`
 checks wiring only (tools registered, system prompt content) — no mocking of
@@ -380,7 +380,7 @@ bug: the same page also boosted the 20-point buyer-questions rating.*
 **Still open**
 - **Does the agent ever skip a check?** The system prompt tells it to use the
   description to judge how deep to go, and to skip checks on a product that is already
-  strong. No real audit so far has skipped a tool: every run has called all five. So
+  strong. No real audit so far has skipped a tool: all 15 eval audits called all five, including 5 on the strongest listing in the store. So
   the "agent decides" claim is untested in the one direction that would prove it.
   Step 10's eval harness should include a strong product and record which tools were
   called. This is something to measure there, not something to fix now.
@@ -395,8 +395,10 @@ bug: the same page also boosted the 20-point buyer-questions rating.*
   happen. The closest thing observed is different: a tool's own `ToolError` on a
   missing product, after which the model carried on anyway (now prevented by the
   `Auditor` pre-check, not by the model).
-- **Is the FAQ fallback reliable?** A real trace shows `check_faq_metafield` being
-  called after `check_faq_page` found nothing, so the "try the page, then the
-  metafield" call order works. The case where the metafield actually has content has
-  never run against a real store, and one run per product cannot say how often the
-  model takes the fallback at all.
+- **Is the FAQ fallback reliable on other products?** On
+  `the-collection-snowboard-liquid`, with the store FAQ page hidden and a real
+  `custom.faq` metafield, the agent called `check_faq_page`, found nothing, then called
+  `check_faq_metafield` and found the content in all 10 audits (two eval batches of
+  five). That is one product with an easy, near-empty listing, so it shows the path
+  works end to end, not how often the model takes it when the product has a strong
+  description that might make it skip checks.

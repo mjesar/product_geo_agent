@@ -1,0 +1,228 @@
+{
+  "the-collection-snowboard-liquid": {
+    "recorded_at": "20261001T113322Z",
+    "model": "gemini:gemini-flash-lite-latest",
+    "git_sha": "af4b0c2",
+    "scores": [
+      25,
+      25,
+      25,
+      25,
+      25
+    ],
+    "items": {
+      "rating:description_quality": [
+        "poor",
+        "poor",
+        "poor",
+        "poor",
+        "poor"
+      ],
+      "rating:buyer_questions_answered": [
+        "poor",
+        "poor",
+        "poor",
+        "poor",
+        "poor"
+      ],
+      "rating:specs_clarity": [
+        "poor",
+        "poor",
+        "poor",
+        "poor",
+        "poor"
+      ],
+      "fact:alt_text": [
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        }
+      ],
+      "fact:faq_source": [
+        "metafield",
+        "metafield",
+        "metafield",
+        "metafield",
+        "metafield"
+      ],
+      "fact:structured_data": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "fact:ai_citation": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "tool:get_product_data": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_faq_page": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_faq_metafield": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_structured_data": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_ai_citation": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ]
+    }
+  },
+  "the-complete-snowboard": {
+    "recorded_at": "20261001T114632Z",
+    "model": "gemini:gemini-flash-lite-latest",
+    "git_sha": "152bdbd",
+    "scores": [
+      70,
+      65,
+      65,
+      70,
+      65
+    ],
+    "items": {
+      "rating:description_quality": [
+        "good",
+        "good",
+        "good",
+        "good",
+        "good"
+      ],
+      "rating:buyer_questions_answered": [
+        "good",
+        "good",
+        "good",
+        "good",
+        "good"
+      ],
+      "rating:specs_clarity": [
+        "good",
+        "fair",
+        "fair",
+        "good",
+        "fair"
+      ],
+      "fact:alt_text": [
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        },
+        {
+          "with_alt": 1,
+          "of": 1
+        }
+      ],
+      "fact:faq_source": [
+        "none",
+        "none",
+        "none",
+        "none",
+        "none"
+      ],
+      "fact:structured_data": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "fact:ai_citation": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "tool:get_product_data": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_faq_page": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_faq_metafield": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_structured_data": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ],
+      "tool:check_ai_citation": [
+        "called",
+        "called",
+        "called",
+        "called",
+        "called"
+      ]
+    }
+  }
+}

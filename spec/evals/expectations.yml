@@ -1,0 +1,96 @@
+# Hand-written ground truth for the eval harness (Step 10).
+# Write each product's expectations BEFORE looking at any run's output, otherwise they
+# just confirm whatever the agent said. Loaded and validated by
+# GeoAudit::Eval::Expectations, which rejects typos and unknown keys.
+#
+# Shape of one product (the handle is the key):
+#
+#   products:
+#     some-product-handle:
+#       # optional, filled in later by the harness: hash of the product's content
+#       fingerprint: "abc123"
+#
+#       # required, all three. For each: "accept" is every rating you would not call a
+#       # failure ([good] = only good, [fair, good] = either), from poor/fair/good.
+#       # "expected" is optional: the one you actually believe is most likely, and it
+#       # must be one of the accepted ones. A run that is accepted but not expected is
+#       # reported as off-expectation, not as a failure.
+#       ratings:
+#         description_quality: { accept: [good], expected: good }
+#         buyer_questions_answered: { accept: [fair, good], expected: fair }
+#         specs_clarity: { accept: [fair, good] }
+#
+#       # optional, each one only checked if present. These come from the tools
+#       # (Storefront, HTTP), not the model, so give the exact expected value.
+#       facts:
+#         alt_text: { with_alt: 2, of: 3 }   # images with alt text, out of all images
+#         faq_source: metafield              # page, metafield or none
+#         structured_data: false             # Product/FAQPage markup found?
+#         ai_citation: false                 # did the AI mention the product?
+#
+#       # optional, tool names the agent must / must not call in a run
+#       tools:
+#         must_call: [check_faq_page, check_faq_metafield]
+#         must_not_call: []
+products:
+  # Metafield-fallback product. Setup when these were written: store FAQ page Hidden,
+  # custom.faq set to three plain Q&A pairs (vendor, price, single variant), description
+  # empty, one image with alt text, a single "Default Title" variant at 749.95 USD.
+  # Written from the rubric in system_prompt.erb and facts read from the store, before
+  # any eval run of this product. Facts below come from the store and the live page,
+  # not from an agent run.
+  the-collection-snowboard-liquid:
+    ratings:
+      # Description is empty, and the prompt says "poor if it's missing".
+      description_quality: { accept: [ poor ], expected: poor }
+      # Judged on the product's own content only, and there is none. The FAQ metafield
+      # is explicitly not to be counted here, but the model might leak it in (the same
+      # kind of leak fixed for the store FAQ page), so fair is tolerated, poor expected.
+      buyer_questions_answered: { accept: [ poor, fair ], expected: poor }
+      # Only an unlabeled "Default Title" variant, which the prompt calls poor. fair is
+      # tolerated because specs_clarity has been the unstable item on other products.
+      specs_clarity: { accept: [ poor, fair ], expected: poor }
+    facts:
+      alt_text: { with_alt: 1, of: 1 }
+      # The page is hidden, so the page lookup finds nothing and the metafield has content.
+      faq_source: metafield
+      # The theme emits a Product block, but without a description it is incomplete, and
+      # there is no FAQPage markup.
+      structured_data: false
+      # A sandbox product no real assistant would know.
+      ai_citation: false
+    tools:
+      # A thin description tells the agent to look harder, so all five are expected, and
+      # the metafield one only runs if the page lookup came back empty first.
+      must_call: [ get_product_data, check_faq_page, check_faq_metafield, check_structured_data, check_ai_citation ]
+
+  # The strong product, and the one the harness exists for: specs_clarity flipped between
+  # fair and good on it across earlier manual runs, with nothing changed. NOT blind: those
+  # runs (scores 65, 85, 85, 80, some with the store FAQ page visible) are known. These
+  # were written from the prompt's rubric and facts read from the store, and the store
+  # state is the same as the metafield product's (FAQ page hidden, no metafield here).
+  # Facts: description of about 1000 characters covering material, fit, use, care,
+  # sizing and what is in the box; five colour-only variants (Ice, Dawn, Powder,
+  # Electric, Sunset) at one price; one image with alt text; a complete Product schema.
+  the-complete-snowboard:
+    ratings:
+      # Specific on material (poplar core, sintered graphite base), fit and use case.
+      description_quality: { accept: [ good ], expected: good }
+      # The product's own text covers sizing, care, what is included and that bindings
+      # are sold separately. fair is tolerated for the "obvious questions" wording.
+      buyer_questions_answered: { accept: [ fair, good ], expected: good }
+      # Clear, distinct colour names, but colour only. The prompt's "informative" is
+      # ambiguous for that, which is why this item has flipped, so no single prediction.
+      specs_clarity: { accept: [ fair, good ] }
+    facts:
+      alt_text: { with_alt: 1, of: 1 }
+      # The store FAQ page is hidden and this product has no custom.faq metafield.
+      faq_source: none
+      # The theme's Product block has both a description and offers, so it is complete.
+      structured_data: true
+      ai_citation: false
+    tools:
+      # The prompt allows moving faster on a strong product, but the FAQ fallback rule is
+      # explicit ("if it finds nothing, call check_faq_metafield"), so all five are
+      # expected. A skipped tool here would be a real finding.
+      must_call: [ get_product_data, check_faq_page, check_faq_metafield, check_structured_data, check_ai_citation ]
