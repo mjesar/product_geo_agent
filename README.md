@@ -80,6 +80,7 @@ the agent's ratings are from run to run; it has run on one product so far.
 - [Architecture map](https://claude.ai/artifact/PrAVHZAaoiwTp3bQYcqCPk) — diagrams: system architecture, agent decision flow, dev workflow
 - [`docs/user-guide.md`](docs/user-guide.md) - plain-language guide to what the tool does, with real audit outputs (no code reading needed)
 - [`docs/development-plan.md`](docs/development-plan.md) — step-by-step build plan, one branch/PR per step
+- [`docs/evals.md`](docs/evals.md) - how the eval harness checks whether the agent's ratings hold up (`bin/eval`)
 - [`docs/agent-concepts.md`](docs/agent-concepts.md) — running notes on agent-development concepts learned while building this
 - [`docs/faq.md`](docs/faq.md) - short answers on building AI agents with Ruby on Rails, and on checking whether AI assistants can recommend a Shopify product
 - [`docs/shopify-auth-setup.md`](docs/shopify-auth-setup.md) — how the Storefront API token was set up
