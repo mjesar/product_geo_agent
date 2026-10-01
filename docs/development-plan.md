@@ -216,13 +216,20 @@ Branch: `audit-visibility`
   it — `before_tool`/`after_tool` hooks raise `CurrentAudit::MissingError` instead of
   seeing the current run. Found while wiring hooks against a real run, not obvious
   up front from the little_ghost docs
-- **Follow-up, not fixed here**: `GetProductDataTool` returns "not found" as a normal
-  successful tool result rather than raising, so on a handle that doesn't resolve the
-  agent still runs its full checklist (FAQ page, FAQ metafield, structured data,
-  citation) against nothing, burning several Gemini calls for no reason — confirmed
-  live, a nonexistent-handle smoke test made 4 real calls before being killed. Two
-  options, not decided yet: teach the system prompt to stop early on a not-found
-  result, or have `Auditor` check the handle resolves before invoking the agent at all
+- **Follow-up (✅ fixed on branch `nonexistent-handle-precheck`, not its own numbered
+  step)**: on a handle that didn't resolve, the agent still ran its full checklist (FAQ
+  page, FAQ metafield, structured data, citation) against nothing, burning several
+  Gemini calls for no reason. Confirmed live: a nonexistent-handle smoke test made 4
+  real calls before being killed. `GetProductDataTool` does raise a `ToolError` on a
+  missing product, but the model still carried on after seeing it. Two options were
+  weighed: teach the system prompt to stop early on a not-found result, or have
+  `Auditor` check the handle resolves before invoking the agent at all. Went with the
+  second: `GeoAudit::ProductLookup` runs one cheap Storefront query, and `Auditor`
+  raises `Auditor::ProductNotFound` (after a `:failure` reporter event) before the
+  agent exists, so a bad handle costs zero Gemini calls. A prompt instruction could
+  only make that likely, plain code guarantees it, and a stubbed spec can prove it.
+  Storefront errors such as a bad token still propagate rather than being reported as
+  "not found"
 - **Follow-up (✅ merged as PR #16, branch `reporter-redesign`, not its own numbered step)**:
   the first real run against `Terminal` exposed the actual problem with the original
   design — `tool_finished`'s `summary:` was just `value.to_s`, the entire raw Ruby

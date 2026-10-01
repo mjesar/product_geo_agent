@@ -2,9 +2,13 @@ module GeoAudit
   class Auditor
     Result = Data.define(:run, :score, :explanation, :usage, :elapsed_seconds)
 
-    def initialize(clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, reporter: Reporter::Null.new)
+    class ProductNotFound < StandardError; end
+
+    def initialize(clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, reporter: Reporter::Null.new,
+                   product_lookup: ProductLookup.new)
       @clock = clock
       @reporter = reporter
+      @product_lookup = product_lookup
     end
 
     def call(handle:)
@@ -13,6 +17,7 @@ module GeoAudit
       started_at = @clock.call
 
       @reporter.event(:start, handle: handle, model: GeoAuditAgent.model)
+      ensure_product_exists!(handle)
       CurrentAudit.current = current_audit
 
       run = GeoAuditAgent.ask("Audit the Shopify product with handle '#{handle}' for AI discoverability.")
@@ -39,6 +44,18 @@ module GeoAudit
       Result.new(run:, score:, explanation:, usage:, elapsed_seconds:)
     ensure
       CurrentAudit.current = nil
+    end
+
+    private
+
+    # Checked in plain Ruby before the agent exists, so a typo'd handle costs one
+    # Storefront request instead of several Gemini calls spent auditing nothing.
+    def ensure_product_exists!(handle)
+      return if @product_lookup.exists?(handle)
+
+      reason = "no product found for handle '#{handle}'"
+      @reporter.event(:failure, step: "product lookup", reason: reason, partial_results: {})
+      raise ProductNotFound, reason
     end
   end
 end
