@@ -367,9 +367,36 @@ bug: the same page also boosted the 20-point buyer-questions rating.*
 4. Run the real agent, and compare each number in the output to its source.
 
 ## Open questions / things to learn next
-- How does `little_ghost` actually expose tool-call decisions — do I get visibility
-  into *why* it picked a tool, or just the fact that it did?
-- What happens if the model tries to call a tool that doesn't exist or with malformed
-  arguments — how does the gem handle that failure mode?
-- How much does the system prompt's exact wording affect whether it actually follows
-  the "try X, fall back to Y" strategy reliably?
+
+**Answered since this section was first written**
+- *Does the prompt's exact wording change whether the agent behaves as intended?* Yes,
+  repeatedly. The clearest case is the store FAQ page being counted a second time in
+  `buyer_questions_answered` until one sentence in `system_prompt.erb` fixed it (see "A
+  third, related cause" in the Grounding section, and "System prompts" above).
+- *Can I see what the agent did?* Yes: which tool it chose, with what inputs, what came
+  back and how long it took. See "Hooks and structured output" and "What a trace looks
+  like". What this does not show is *why*, which is the first open question below.
+
+**Still open**
+- **Does the agent ever skip a check?** The system prompt tells it to use the
+  description to judge how deep to go, and to skip checks on a product that is already
+  strong. No real audit so far has skipped a tool: every run has called all five. So
+  the "agent decides" claim is untested in the one direction that would prove it.
+  Step 10's eval harness should include a strong product and record which tools were
+  called. This is something to measure there, not something to fix now.
+- **Why did it pick that tool?** Hooks and `--trace` record the choice ("chose tool
+  `check_faq_page`") but a real trace shows each turn's response as a bare tool call,
+  with no reasoning text in it. Whether `little_ghost` or Gemini can expose the model's
+  reasoning for a step, or whether the prompt would have to ask for it, is unknown.
+- **What happens on an unknown tool or malformed arguments?** Never seen in a real run
+  or a spec here. Reading the gem's source, an unknown tool name raises a `ToolError`
+  and invalid input produces a feedback message for the model, so the intent is to hand
+  the error back and let it retry, but that is from the code, not from watching it
+  happen. The closest thing observed is different: a tool's own `ToolError` on a
+  missing product, after which the model carried on anyway (now prevented by the
+  `Auditor` pre-check, not by the model).
+- **Is the FAQ fallback reliable?** A real trace shows `check_faq_metafield` being
+  called after `check_faq_page` found nothing, so the "try the page, then the
+  metafield" call order works. The case where the metafield actually has content has
+  never run against a real store, and one run per product cannot say how often the
+  model takes the fallback at all.
