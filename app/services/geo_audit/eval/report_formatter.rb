@@ -5,12 +5,16 @@ module GeoAudit
     class ReportFormatter
       LABELS = { pass: "PASS", off_expectation: "OFF", flaky: "FLAKY", fail: "FAIL" }.freeze
 
-      def initialize(report)
+      # drift is an optional Drift::Result. It is shown as its own section and never
+      # changes the PASS/FAIL result.
+      def initialize(report, drift: nil)
         @report = report
+        @drift = drift
       end
 
       def call
-        [ header, *score_line, "", *@report.items.map { |item| item_line(item) }, *error_lines, "", result_line ].join("\n")
+        [ header, *score_line, "", *@report.items.map { |item| item_line(item) }, *error_lines,
+          *drift_lines, "", result_line ].join("\n")
       end
 
       private
@@ -34,6 +38,15 @@ module GeoAudit
 
       def error_lines
         @report.errors.map { |message| "error: #{message}" }
+      end
+
+      def drift_lines
+        return [] unless @drift
+
+        meta = @drift.meta.values_at("model", "git_sha", "recorded_at").compact.join(", ")
+        changes = @drift.changes.map { |change| "  #{change.key}: #{value_text(change.before)} -> #{value_text(change.after)}" }
+
+        [ "", "drift vs baseline (#{meta}):", *(changes.presence || [ "  none" ]) ]
       end
 
       def result_line
@@ -62,6 +75,7 @@ module GeoAudit
       def value_text(value)
         case value
         when nil then "not observed"
+        when Numeric then format("%g", value)
         when Hash then "#{value[:with_alt]} of #{value[:of]} with alt"
         else value.to_s
         end

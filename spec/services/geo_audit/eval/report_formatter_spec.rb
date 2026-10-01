@@ -85,6 +85,38 @@ RSpec.describe GeoAudit::Eval::ReportFormatter do
     expect(text).to include("error: Gemini rate limited")
   end
 
+  describe "drift section" do
+    let(:meta) { { "model" => "gemini:test", "git_sha" => "abc123", "recorded_at" => "20261001T000000Z" } }
+
+    def with_drift(changes)
+      report = GeoAudit::Eval::Report.new(expectation).call([ run(1), run(2) ])
+      drift = GeoAudit::Eval::Drift::Result.new(meta: meta, changes: changes)
+      described_class.new(report, drift: drift).call
+    end
+
+    it "lists what moved against the baseline, and says where the baseline came from" do
+      change = GeoAudit::Eval::Drift::Change.new(key: "rating:specs_clarity", before: "poor", after: "fair")
+      score = GeoAudit::Eval::Drift::Change.new(key: "score", before: 25.0, after: 30.0)
+      text = with_drift([ change, score ])
+
+      expect(text).to include("drift vs baseline (gemini:test, abc123, 20261001T000000Z):")
+      expect(text).to include("  rating:specs_clarity: poor -> fair")
+      expect(text).to include("  score: 25 -> 30")
+    end
+
+    it "says none when nothing moved, and does not change the result" do
+      text = with_drift([])
+
+      expect(text).to include("drift vs baseline")
+      expect(text).to match(/drift vs baseline.*\n  none/)
+      expect(text).to include("RESULT: PASS")
+    end
+
+    it "shows no drift section when there is no baseline" do
+      expect(format_runs([ run(1) ])).not_to include("drift vs baseline")
+    end
+  end
+
   it "passes when every item passes" do
     expect(format_runs([ run(1), run(2) ])).to include("RESULT: PASS")
   end
