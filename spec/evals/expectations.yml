@@ -63,3 +63,34 @@ products:
       # A thin description tells the agent to look harder, so all five are expected, and
       # the metafield one only runs if the page lookup came back empty first.
       must_call: [ get_product_data, check_faq_page, check_faq_metafield, check_structured_data, check_ai_citation ]
+
+  # The strong product, and the one the harness exists for: specs_clarity flipped between
+  # fair and good on it across earlier manual runs, with nothing changed. NOT blind: those
+  # runs (scores 65, 85, 85, 80, some with the store FAQ page visible) are known. These
+  # were written from the prompt's rubric and facts read from the store, and the store
+  # state is the same as the metafield product's (FAQ page hidden, no metafield here).
+  # Facts: description of about 1000 characters covering material, fit, use, care,
+  # sizing and what is in the box; five colour-only variants (Ice, Dawn, Powder,
+  # Electric, Sunset) at one price; one image with alt text; a complete Product schema.
+  the-complete-snowboard:
+    ratings:
+      # Specific on material (poplar core, sintered graphite base), fit and use case.
+      description_quality: { accept: [ good ], expected: good }
+      # The product's own text covers sizing, care, what is included and that bindings
+      # are sold separately. fair is tolerated for the "obvious questions" wording.
+      buyer_questions_answered: { accept: [ fair, good ], expected: good }
+      # Clear, distinct colour names, but colour only. The prompt's "informative" is
+      # ambiguous for that, which is why this item has flipped, so no single prediction.
+      specs_clarity: { accept: [ fair, good ] }
+    facts:
+      alt_text: { with_alt: 1, of: 1 }
+      # The store FAQ page is hidden and this product has no custom.faq metafield.
+      faq_source: none
+      # The theme's Product block has both a description and offers, so it is complete.
+      structured_data: true
+      ai_citation: false
+    tools:
+      # The prompt allows moving faster on a strong product, but the FAQ fallback rule is
+      # explicit ("if it finds nothing, call check_faq_metafield"), so all five are
+      # expected. A skipped tool here would be a real finding.
+      must_call: [ get_product_data, check_faq_page, check_faq_metafield, check_structured_data, check_ai_citation ]
