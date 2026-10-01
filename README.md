@@ -1,6 +1,16 @@
-# ProductGeoAgent: a GEO/AEO audit agent for Shopify products
+<h1 align="center">
+  <img src="assets/readme/hero.svg" alt="ProductGeoAgent: a GEO/AEO audit agent for Shopify products" width="100%">
+</h1>
 
-[![CI status](https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml)
+<p align="center"><strong>Learn how an AI agent works by watching one audit a real Shopify product.</strong></p>
+
+<p align="center">
+  <a href="https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml"><img src="https://github.com/mjesar/product_geo_agent/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI status"></a>
+  <img src="https://img.shields.io/badge/Ruby-4.0-CC342D?logo=ruby&logoColor=white" alt="Ruby 4.0">
+  <img src="https://img.shields.io/badge/Rails-8.1-CC0000?logo=rubyonrails&logoColor=white" alt="Rails 8.1">
+  <img src="https://img.shields.io/badge/Model-Gemini-4285F4?logo=googlegemini&logoColor=white" alt="Gemini model">
+  <img src="https://img.shields.io/badge/Topic-GEO%20%2F%20AEO-2e7d4f" alt="GEO and AEO">
+</p>
 
 **ProductGeoAgent is an agentic generative AI tool that checks whether AI shopping assistants (ChatGPT, Gemini, Perplexity, Google AI Overviews) can find, understand and recommend a Shopify product.** It is a Ruby on Rails command-line agent that scores a product's AI discoverability from 0 to 100 and names the top gaps to fix.
 
