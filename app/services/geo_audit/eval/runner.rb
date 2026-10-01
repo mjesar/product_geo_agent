@@ -7,7 +7,13 @@ module GeoAudit
     class Runner
       # error is nil for a run that completed. A failed run is kept rather than raised,
       # so one rate-limited audit does not throw away the other four.
-      Run = Data.define(:index, :ratings, :tool_results, :score, :calls, :error)
+      Run = Data.define(:index, :ratings, :tool_results, :score, :calls, :error) do
+        # A plain-hash form for the saved results file (Score::Result is a nested Data
+        # object, so it is reduced to the total here).
+        def to_log
+          { index: index, ratings: ratings, tool_results: tool_results, score: score&.total, calls: calls, error: error }
+        end
+      end
 
       # One audit makes roughly 7 requests (see CLAUDE.md). Used to pace a run that
       # failed before its real usage was known.

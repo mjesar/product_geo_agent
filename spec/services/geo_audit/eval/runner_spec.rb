@@ -46,6 +46,12 @@ RSpec.describe GeoAudit::Eval::Runner do
     expect(run).to have_attributes(ratings: ratings, tool_results: tool_results, score: score, calls: 7, error: nil)
   end
 
+  it "has a plain-hash log form for the saved results file" do
+    run = runner(runs: 1).call(handle: "cozy-wool-socks").first
+
+    expect(run.to_log).to eq(index: 1, ratings: ratings, tool_results: tool_results, score: 82, calls: 7, error: nil)
+  end
+
   it "defaults to five runs" do
     allow(auditor).to receive(:call).and_return(audit_result)
     described_class.new(auditor: auditor, clock: -> { 0.0 }, sleeper: sleeper).call(handle: "cozy-wool-socks")
