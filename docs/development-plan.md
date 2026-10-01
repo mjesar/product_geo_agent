@@ -286,7 +286,8 @@ in hand than by guessing from a silent final score.
 - Add FAQ content to the sandbox store manually (per the known-limitations note in
   `CLAUDE.md`) so both FAQ branches get exercised in a real run, not just in specs
   (partly done: a store FAQ page was added, so the "page found" branch has run for
-  real. The metafield fallback has **not** run live yet)
+  real. The metafield fallback had **not** run live when this was written; it first
+  ran live in Step 10, see below)
 - Update `docs/agent-concepts.md` with what was learned from watching real traces
   (see the new grounding section there)
 
@@ -379,16 +380,25 @@ been:
   changed on the product. The model's `specs_clarity` rating flipped between fair
   and good (see the Step 10 entry for the evidence and its limits).
 - The weights were not tuned, only three products were run, and the FAQ metafield
-  fallback has not run against a real store yet.
+  fallback had not run against a real store yet when this was written (Step 10
+  ran it).
 
-## ⬜ Step 10 — Eval harness: does the agent's judgment hold up?
+## 🔶 Step 10 — Eval harness: does the agent's judgment hold up?
 Branch: `eval-harness`
-- Pick 5-8 real products from the sandbox store, hand-score what each one *should*
-  get (expected score + expected gaps flagged), then run the real agent against them
-  and compare
-- Lives in `spec/evals/` or `docs/evals.md` — exact shape TBD once we see it; may not
-  fit neatly into RSpec's assert-and-pass model since eval output is closer to
-  "how far off was this" than "pass/fail"
+- Pick real products from the sandbox store, hand-write what each one *should* get,
+  run the real agent against them several times, and compare. The plan said 5-8
+  products; it was started with one (the metafield fallback product) and grows from
+  there
+- **Shape, decided:** expectations live in `spec/evals/expectations.yml` (a data file the
+  runner can read, with the reasoning in comments), run by `bin/eval`, not by RSpec.
+  Eval output is closer to "how far off, and how stable" than pass/fail, so it is
+  deliberately kept out of the normal spec suite and CI: it makes real Gemini calls,
+  and about 7 requests per audit against a 15 per minute limit adds up
+- **What an expectation records:** for the three model-rated items, `accept` (every
+  rating that is not a failure) and an optional `expected` (the one value actually
+  predicted); for the code-computed items, exact facts (alt text count, FAQ source,
+  structured data, citation); and which tools must or must not be called. Written
+  blind, before any run of that product, so they cannot just confirm what the agent said
 - Needs the full agent (step 6) and ideally the visibility work (step 8.4) to make
   failures diagnosable, not just visible
 - **Strongest eval candidate found so far: `specs_clarity` is not stable.** On
@@ -401,6 +411,36 @@ Branch: `eval-harness`
   and each flip moves the score by 5 points. One run per product cannot see this,
   so the harness should run each product several times and report the spread, not
   a single number
+- **Built, in chunks (branch `eval-harness`):**
+  1. `GeoAudit::Eval::Expectations`: loads and validates the YAML, rejecting typos and
+     unknown keys so a hand-written file cannot silently skip a check
+  2. `GeoAudit::Eval::Comparator`: judges one run against one product's expectations;
+     each check is `pass`, `off_expectation` (accepted but not the predicted value) or
+     `fail`, and missing evidence is a fail, never a guess
+  3. `GeoAudit::Eval::Runner`: N audits per product with request pacing, one failed
+     audit kept as an error instead of discarding the rest, and the explanation call
+     skipped (`Auditor.new(explain: false)`) to save a request per audit
+  4. `GeoAudit::Eval::Report` and `ReportFormatter`, plus `bin/eval`: a verdict per
+     check across all runs (`PASS`, `FLAKY`, `OFF`, `FAIL`) and the score spread
+  5. `GeoAudit::Eval::Baseline` and `Drift`: a saved summary of a previous run and a
+     comparison of the typical value (median rating, most common fact, median score,
+     5 points being the smallest rating step), informational and never a failure
+- **First real run:** `the-collection-snowboard-liquid`, with the store FAQ page hidden
+  and a `custom.faq` metafield set, so the metafield fallback ran live for the first
+  time. All 12 checks passed in all 5 runs, and a second batch of 5 (recorded as the
+  baseline) came out the same: the agent called `check_faq_page`, found
+  nothing, then `check_faq_metafield` and found the content, and the model did not
+  count the metafield again in `buyer_questions_answered`. Score 25 every run
+- **What that run does not prove:** it was an easy product (empty description, one
+  `Default Title` variant), so there was almost no room for the model to vary. Five
+  identical results show the harness works end to end, not that the model is stable on
+  harder products. Some facts also come from the same tools the agent calls. The
+  unstable item, `specs_clarity` on `the-complete-snowboard`, has not been run through
+  the harness yet
+- **Setup gotchas found:** a product metafield is only returned by the Storefront API
+  if its definition has Storefront access switched on, and the store FAQ page is one
+  store-wide page (`handle: "faq"`), so the fallback can only be exercised while it is
+  hidden, which changes every other product's result too
 - **Concept focus:** evals vs. tests — RSpec specs prove the code doesn't crash and
   returns the right shape; they say nothing about whether the agent's actual
   judgment (the score, the gaps it flags) is any good. An eval harness is the

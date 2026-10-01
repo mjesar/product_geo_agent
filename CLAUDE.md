@@ -111,7 +111,7 @@ poor/fair/good by the model (none, half or full points); the rest are computed i
   cases (empty FAQ, no structured data, no citation found) are the actual point of
   this project's scoring logic.
 
-## Observability & evals (observability built in step 8.4, evals planned in step 10, see `docs/development-plan.md`)
+## Observability & evals (observability built in step 8.4, evals built in step 10, see `docs/development-plan.md`)
 RSpec specs prove correctness: the code doesn't crash, and returns the right shape.
 They prove nothing about two other things that matter for an agentic system, and both
 were real gaps here, not just nice-to-haves:
@@ -122,11 +122,15 @@ were real gaps here, not just nice-to-haves:
   event from every part of an audit, so `bin/audit` prints a readable live trace (and
   `--verbose` / `--trace` go deeper), useful for debugging during development and for
   showing the agent's actual behavior, not just the final score.
-- **Evals** — RSpec can't tell you whether the agent's *judgment* is any good (is the
+- **Evals**: RSpec can't tell you whether the agent's *judgment* is any good (is the
   score right, are the flagged gaps the actual gaps), only whether the code ran
-  without crashing. Planned fix: a small hand-scored ground-truth set (5-8 real
-  sandbox products) the agent gets run against, to catch whether a scoring-rubric
-  change made things better or worse.
+  without crashing. Built in step 10: hand-written expectations per sandbox product
+  (`spec/evals/expectations.yml`) that `bin/eval` runs the real agent against several
+  times, reporting a verdict per check across the runs, plus drift against a saved
+  baseline (`spec/evals/baseline.json`). Conventions: write a product's expectations
+  before its first run, never in CI or the default `rspec` run (it makes real Gemini
+  calls), and only replace the baseline on purpose with `--save-baseline`. The store's
+  state matters: the FAQ page and metafield settings change every product's result.
 
 ## Shopify auth setup (already done, for reference)
 - App type: custom app, created via Dev Dashboard (legacy custom app UI is gone as of
