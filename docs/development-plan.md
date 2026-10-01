@@ -383,7 +383,7 @@ been:
   fallback had not run against a real store yet when this was written (Step 10
   ran it).
 
-## 🔶 Step 10 — Eval harness: does the agent's judgment hold up?
+## ✅ Step 10 — Eval harness: does the agent's judgment hold up?
 Branch: `eval-harness`
 - Pick real products from the sandbox store, hand-write what each one *should* get,
   run the real agent against them several times, and compare. The plan said 5-8
