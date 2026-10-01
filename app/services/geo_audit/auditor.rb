@@ -5,10 +5,13 @@ module GeoAudit
     class ProductNotFound < StandardError; end
 
     def initialize(clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, reporter: Reporter::Null.new,
-                   product_lookup: ProductLookup.new)
+                   product_lookup: ProductLookup.new, explain: true)
       @clock = clock
       @reporter = reporter
       @product_lookup = product_lookup
+      # The eval harness only needs the ratings and tool results, so it can skip the
+      # gaps explanation, one fewer Gemini request per audit. Result#explanation is nil then.
+      @explain = explain
     end
 
     def call(handle:)
@@ -34,8 +37,11 @@ module GeoAudit
       score = Score.new(tool_results: run.result.state, ratings: run.result.structured_result.value).call
       @reporter.event(:score_computed, result: score)
 
-      explanation = GapsExplanation.new(retrier: Retrier.new(tracker: tracker, part: :explanation)).call(score: score)
-      @reporter.event(:explanation, text: explanation)
+      explanation = nil
+      if @explain
+        explanation = GapsExplanation.new(retrier: Retrier.new(tracker: tracker, part: :explanation)).call(score: score)
+        @reporter.event(:explanation, text: explanation)
+      end
 
       usage = tracker.snapshot
       elapsed_seconds = @clock.call - started_at
