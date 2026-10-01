@@ -8,6 +8,10 @@ module GeoAudit
       class Invalid < StandardError; end
 
       ProductExpectation = Data.define(:handle, :fingerprint, :ratings, :facts, :must_call, :must_not_call)
+      # accept: every rating that counts as a pass. expected: the one rating actually
+      # believed likely (or nil), so a run that is accepted but off-expectation can be
+      # told apart from one that landed where it was predicted.
+      RatingExpectation = Data.define(:accept, :expected)
 
       # The three items the model judges. The rest of the rubric is computed in code
       # from tool results, so those are recorded as facts, not allowed-rating sets.
@@ -16,6 +20,7 @@ module GeoAudit
       FAQ_SOURCES = %w[page metafield none].freeze
       PRODUCT_KEYS = %w[fingerprint ratings facts tools].freeze
       TOOL_KEYS = %w[must_call must_not_call].freeze
+      RATING_KEYS = %w[accept expected].freeze
 
       attr_reader :products
 
@@ -78,7 +83,19 @@ module GeoAudit
         missing = RATED_ITEMS - value.keys
         raise Invalid, "#{where}.ratings is missing #{missing.join(', ')}" if missing.any?
 
-        value.to_h { |item, allowed| [ item.to_sym, allowed_ratings(allowed, "#{where}.ratings.#{item}") ] }
+        value.to_h { |item, spec| [ item.to_sym, rating_expectation(spec, "#{where}.ratings.#{item}") ] }
+      end
+
+      def rating_expectation(value, where)
+        require_hash!(value, where)
+        reject_unknown_keys!(value, RATING_KEYS, where)
+        accept = allowed_ratings(value["accept"], "#{where}.accept")
+        expected = value["expected"]
+        unless expected.nil? || accept.include?(expected)
+          raise Invalid, "#{where}.expected must be one of the accepted ratings (#{accept.join(', ')})"
+        end
+
+        RatingExpectation.new(accept: accept, expected: expected)
       end
 
       def allowed_ratings(value, where)

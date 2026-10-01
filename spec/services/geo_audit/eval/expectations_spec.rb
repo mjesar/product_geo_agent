@@ -5,9 +5,9 @@ RSpec.describe GeoAudit::Eval::Expectations do
     {
       "fingerprint" => "abc123",
       "ratings" => {
-        "description_quality" => [ "good" ],
-        "buyer_questions_answered" => [ "fair", "good" ],
-        "specs_clarity" => [ "fair", "good" ]
+        "description_quality" => { "accept" => [ "good" ], "expected" => "good" },
+        "buyer_questions_answered" => { "accept" => [ "fair", "good" ], "expected" => "fair" },
+        "specs_clarity" => { "accept" => [ "fair", "good" ] }
       },
       "facts" => {
         "alt_text" => { "with_alt" => 2, "of" => 3 },
@@ -34,12 +34,15 @@ RSpec.describe GeoAudit::Eval::Expectations do
       expect(product.fingerprint).to eq("abc123")
     end
 
-    it "keys the allowed ratings by item, as symbols" do
-      expect(product.ratings).to eq(
-        description_quality: [ "good" ],
-        buyer_questions_answered: [ "fair", "good" ],
-        specs_clarity: [ "fair", "good" ]
+    it "keys the rating expectations by item, as symbols" do
+      expect(product.ratings.keys).to eq([ :description_quality, :buyer_questions_answered, :specs_clarity ])
+      expect(product.ratings[:buyer_questions_answered]).to eq(
+        described_class::RatingExpectation.new(accept: [ "fair", "good" ], expected: "fair")
       )
+    end
+
+    it "leaves expected nil when only the accepted ratings were given" do
+      expect(product.ratings[:specs_clarity].expected).to be_nil
     end
 
     it "keeps the expected facts" do
@@ -80,16 +83,30 @@ RSpec.describe GeoAudit::Eval::Expectations do
 
     it "rejects a rating that is not poor, fair or good" do
       product = valid_product.deep_dup
-      product["ratings"]["specs_clarity"] = [ "great" ]
+      product["ratings"]["specs_clarity"] = { "accept" => [ "great" ] }
 
-      expect { build(product) }.to raise_error(described_class::Invalid, /specs_clarity must be a non-empty list/)
+      expect { build(product) }.to raise_error(described_class::Invalid, /specs_clarity.accept must be a non-empty list/)
     end
 
     it "rejects an empty allowed list" do
       product = valid_product.deep_dup
-      product["ratings"]["specs_clarity"] = []
+      product["ratings"]["specs_clarity"] = { "accept" => [] }
 
-      expect { build(product) }.to raise_error(described_class::Invalid, /specs_clarity must be a non-empty list/)
+      expect { build(product) }.to raise_error(described_class::Invalid, /specs_clarity.accept must be a non-empty list/)
+    end
+
+    it "rejects an expected rating that is not among the accepted ones" do
+      product = valid_product.deep_dup
+      product["ratings"]["description_quality"] = { "accept" => [ "good" ], "expected" => "fair" }
+
+      expect { build(product) }.to raise_error(described_class::Invalid, /description_quality.expected must be one of the accepted/)
+    end
+
+    it "rejects the old bare-list shape for a rating, with a clear path" do
+      product = valid_product.deep_dup
+      product["ratings"]["specs_clarity"] = [ "good" ]
+
+      expect { build(product) }.to raise_error(described_class::Invalid, /ratings.specs_clarity must be a mapping/)
     end
 
     it "rejects an unknown key, so a typo cannot silently skip a check" do

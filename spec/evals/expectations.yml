@@ -10,12 +10,15 @@
 #       # optional, filled in later by the harness: hash of the product's content
 #       fingerprint: "abc123"
 #
-#       # required, all three. A list of the ratings you would ACCEPT from the model:
-#       # [good] means only good, [fair, good] means either. Each from poor/fair/good.
+#       # required, all three. For each: "accept" is every rating you would not call a
+#       # failure ([good] = only good, [fair, good] = either), from poor/fair/good.
+#       # "expected" is optional: the one you actually believe is most likely, and it
+#       # must be one of the accepted ones. A run that is accepted but not expected is
+#       # reported as off-expectation, not as a failure.
 #       ratings:
-#         description_quality: [good]
-#         buyer_questions_answered: [fair, good]
-#         specs_clarity: [fair, good]
+#         description_quality: { accept: [good], expected: good }
+#         buyer_questions_answered: { accept: [fair, good], expected: fair }
+#         specs_clarity: { accept: [fair, good] }
 #
 #       # optional, each one only checked if present. These come from the tools
 #       # (Storefront, HTTP), not the model, so give the exact expected value.
