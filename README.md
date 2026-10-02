@@ -42,9 +42,16 @@ Four things keep the agent reliable: **grounding** (the explanation must match t
 
 </details>
 
-<!-- Paste the video's user-attachments URL on its own line below to embed it (drag the MP4 into GitHub's web editor to get one). -->
+![Terminal demo of an AI agent running a GEO and AEO audit on Shopify products: it calls tools one at a time, falls back from the FAQ page to the FAQ metafield, and ends with scores of 70/100 and 33/100](assets/readme/demo.gif)
 
-Three real audits, one run each, against a sandbox Shopify store:
+<details>
+<summary>Text version of the demo</summary>
+
+Running `bin/audit the-videographer-snowboard`, the agent reasons, then calls one tool at a time: `get_product_data`, `check_faq_page` (no FAQ page found), `check_faq_metafield` (the fallback, no FAQ metafield found), `check_structured_data` (Product schema yes, FAQ schema no) and `check_ai_citation` (not mentioned as a recommendation). It then prints a score of 33 / 100. The first audit in the demo, `the-complete-snowboard`, follows the same loop and ends at 70 / 100, with a short explanation of the points lost.
+
+</details>
+
+Three real audits, one run each, against a sandbox Shopify store (the demo above shows the first two):
 
 | Product | Score | What the agent found |
 |---|---|---|
