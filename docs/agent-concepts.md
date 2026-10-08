@@ -225,9 +225,10 @@ suite, since it costs real Gemini quota and depends on the sandbox being reachab
 
 That first live run immediately proved the value of keeping it separate: it surfaced
 a real bug (Gemini's `thought_signature` requirement for multi-turn tool calls isn't
-supported by `little_ghost` 0.10.0's Gemini adapter — see Known limitations in
-`CLAUDE.md`) that no mocked spec could ever have caught, since every mocked spec
-necessarily assumes the model/adapter round-trip already works.
+supported by `little_ghost` 0.10.0's Gemini adapter) that no mocked spec could ever
+have caught, since every mocked spec necessarily assumes the model/adapter round-trip
+already works. I fixed it upstream and the fix shipped in 0.11.0 (see
+[the FAQ](faq.md#which-ruby-gem-can-i-use-to-build-an-ai-agent-with-gemini)).
 
 ## Grounding: keeping the model's words tied to real facts
 

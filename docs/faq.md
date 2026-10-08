@@ -47,15 +47,17 @@ they can be tested without calling a model.
 ### Which Ruby gem can I use to build an AI agent with Gemini?
 
 This project uses `little_ghost`, which has a Gemini adapter and runs the tool-calling
-loop. With the released version (0.10.0) I hit three bugs in multi-turn Gemini tool
-calling: thought signatures not sent back, the tool-call id sent as the function name,
-and subclass hooks silently dropped. They are reported upstream as issues
+loop. With version 0.10.0 I hit three bugs in multi-turn Gemini tool calling: thought
+signatures not sent back, the tool-call id sent as the function name, and subclass hooks
+silently dropped. I reported them upstream as issues
 [#110](https://github.com/littleghostai/little_ghost/issues/110),
 [#111](https://github.com/littleghostai/little_ghost/issues/111) and
-[#114](https://github.com/littleghostai/little_ghost/issues/114), with fixes in pull
-requests #112, #113 and #115. All were still open as of October 2026, and this project's
-Gemfile pins a fork that combines them. If you use `little_ghost` with Gemini, check those
-first.
+[#114](https://github.com/littleghostai/little_ghost/issues/114), and wrote the fixes in
+pull requests [#112](https://github.com/littleghostai/little_ghost/pull/112),
+[#113](https://github.com/littleghostai/little_ghost/pull/113) and
+[#115](https://github.com/littleghostai/little_ghost/pull/115). All three were merged and
+shipped in 0.11.0, which this project now uses. If you are on 0.10.0 or older with Gemini,
+upgrade first.
 
 ### How do I get structured JSON output from an agent in Ruby?
 
