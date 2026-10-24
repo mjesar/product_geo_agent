@@ -25,7 +25,7 @@ with extra steps."
 ## Tools
 
 A tool is a function (in our case, a Ruby method) described to the model via a JSON
-schema — name, description, and expected input parameters. The model doesn't run the
+schema: name, description, and expected input parameters. The model doesn't run the
 tool itself; it returns a structured "please call this tool with these arguments"
 response, and *my code* actually executes it, then feeds the result back into the
 conversation for the model to reason over.
@@ -38,11 +38,11 @@ multiple tool calls before it can answer.
 
 Two ways to structure tool access:
 - **One mega-tool** that internally runs all the checks and returns one big result.
-  Simple, but the *agent* isn't deciding anything — my Ruby code is doing all the
+  Simple, but the *agent* isn't deciding anything. My Ruby code is doing all the
   orchestration, and the LLM is just summarizing what it's handed.
 - **Multiple granular tools**, where the agent itself decides which to call, in what
   order, and whether to retry with a different one. This is what makes the reasoning
-  loop actually meaningful — the model is making real decisions, not just passing
+  loop actually meaningful: the model is making real decisions, not just passing
   through a fixed pipeline.
 
 Chose the second for `ProductGeoAgent`, specifically so the agent can:
@@ -55,19 +55,19 @@ Chose the second for `ProductGeoAgent`, specifically so the agent can:
 Borrowed from the "agentic RAG" idea (a retrieval agent decides whether to retrieve at
 all, and can retry with a different approach if the first attempt didn't help). Applied
 here as: if `check_faq_page` finds nothing, the agent tries `check_faq_metafield`
-before concluding there's genuinely no FAQ content — rather than giving up after one
+before concluding there's genuinely no FAQ content, rather than giving up after one
 failed lookup. This is driven by the system prompt's instructions, not fixed
-if/else logic in Ruby — the *model* decides to retry.
+if/else logic in Ruby. The *model* decides to retry.
 
 ## System prompts
 
 **System prompt vs. user message**
 
-A **user message** is the specific ask for one turn — "Audit the Shopify product with
+A **user message** is the specific ask for one turn: "Audit the Shopify product with
 handle 'the-complete-snowboard'." A **system prompt** is standing instructions the
 model follows on *every* message in the conversation, regardless of what the user
 message says. `GeoAuditAgent`'s system prompt (`app/prompts/geo_audit/system_prompt.erb`)
-never mentions a specific product — it says what an audit *is*, what order to run the
+never mentions a specific product. It says what an audit *is*, what order to run the
 five tools in, and how to score the result. The user message just supplies the one
 thing that varies: which product handle to run it against.
 
@@ -78,7 +78,7 @@ specific work order for today.
 
 - **Role and goal first.** Before any instructions, say what the model *is* and what
   it's for. `system_prompt.erb` opens with "You audit a single Shopify product for how
-  discoverable it would be to AI shopping assistants" — that framing shapes everything
+  discoverable it would be to AI shopping assistants". That framing shapes everything
   that follows, since "for AI assistants" produces different judgment than "reads well
   to a human" would.
 - **Explain why, not just what.** "Never pass the product's own name into the question
@@ -89,18 +89,18 @@ specific work order for today.
   check_faq_page finds nothing" only describes a gap. "Call check_faq_metafield before
   concluding there's no FAQ content" tells the model the actual next action to take.
 - **Strategy, not a script.** The prompt says try X first, fall back to Y if X finds
-  nothing, always run Z last — it doesn't hardcode "if description.length < 50 then...".
+  nothing, always run Z last. It doesn't hardcode "if description.length < 50 then...".
   The model fills in the actual decision at runtime based on what each tool call
   returns. A literal step-by-step script would just be Ruby wearing a prompt as a
   costume, and would defeat the point of having an agent at all.
 - **Cover edge cases explicitly.** "If it finds nothing" (empty FAQ result), "once you
-  already know the product's title" (an ordering dependency) — naming edge cases in the
+  already know the product's title" (an ordering dependency). Naming edge cases in the
   prompt is cheaper than discovering the model mishandles them during a real run.
 - **Specify the output format.** The rubric table plus "finish with the overall score
   and the top 2-3 gaps" tells the model exactly what shape the final answer needs, not
   just what to think about along the way.
 - **No contradictions.** A prompt that says "be thorough" in one line and "be concise"
-  in another forces the model to guess which one wins — conflicting instructions can
+  in another forces the model to guess which one wins, and conflicting instructions can
   degrade a model's output in unpredictable ways, worse than either instruction alone.
 - **Test changes with evals, not vibes.** A wording change can shift model behavior in
   ways that read fine on the page but don't hold up in a real run (see the eval
@@ -112,7 +112,7 @@ specific work order for today.
 
 It's tempting to think only the system prompt counts as "the prompt" and tool
 definitions are just plumbing, but every tool's `description` field is also read by the
-model at decision time — it's how the model decides *which* tool to call and *when*.
+model at decision time. It's how the model decides *which* tool to call and *when*.
 `GetProductDataTool`'s description ends with "Always call this first — the
 description's length and quality determine how deep the remaining checks need to go,"
 which is doing real prompting work, not just documentation. A vague tool description
@@ -124,10 +124,10 @@ well-written system prompt.
 These get used interchangeably but mean different things:
 - A **system prompt** is one specific artifact: the standing instructions text itself.
 - **Prompt engineering** is the practice of writing and iterating on prompt text
-  (system prompts, user messages, tool descriptions) to get better model behavior —
+  (system prompts, user messages, tool descriptions) to get better model behavior:
   wording, examples, structure.
 - **Context engineering** is the broader discipline: deciding *everything* that ends up
-  in the model's context window before it responds — which tools are available, what
+  in the model's context window before it responds: which tools are available, what
   data a tool call returns and in how much detail, what's summarized vs. included in
   full, what conversation history is kept vs. dropped. The system prompt is one piece
   of the context; so is every tool result the agent has accumulated by the time it
@@ -139,11 +139,11 @@ These get used interchangeably but mean different things:
 Originally, `system_prompt.erb` asked the model to calculate the final score out of 100
 itself, by reading the rubric table and doing the weighted arithmetic in its head.
 That was the wrong split of responsibility: arithmetic is exactly the kind of thing a
-language model is bad at being *consistent* about — the same tool results could produce
+language model is bad at being *consistent* about. The same tool results could produce
 a slightly different score on two different runs, since nothing about token-by-token
 generation guarantees the same arithmetic twice.
 
-This has since been built (Step 7, `docs/development-plan.md`) — score calculation now
+This has since been built (Step 7, `docs/development-plan.md`): score calculation now
 lives in Ruby, computed from the tool results the agent already collected, and the
 model is only ever asked for judgment it's actually suited to give. The general rule
 this suggests: if a step has one deterministic correct answer, do it in code; if a step
@@ -156,7 +156,7 @@ Two `little_ghost` mechanisms made Step 7 possible, and both are patterns that a
 well beyond scoring.
 
 **Lifecycle hooks.** `little_ghost` fires callbacks at points in the agent's tool
-loop — `before_tool`, `after_tool`, `before_model`, `after_model`, and more.
+loop: `before_tool`, `after_tool`, `before_model`, `after_model`, and more.
 `GeoAuditAgent` uses `after_tool` to copy every tool's raw Ruby return value into
 `context.state`, a plain hash that travels with the run and survives to the end of it
 as `run.result.state`. This is the general pattern for pulling data *out* of an agent
@@ -173,14 +173,14 @@ with a model's output beyond displaying it, structured output beats asking nicel
 a specific format and hoping the text stays parseable.
 
 **Two conversations, not one.** `GeoAudit::Score` reads `run.result.state` and
-`run.result.structured_result.value` and computes the final number in plain Ruby —
-that's the deterministic half. Explaining that number in readable prose still needs a
+`run.result.structured_result.value` and computes the final number in plain Ruby.
+That's the deterministic half. Explaining that number in readable prose still needs a
 model, but not *this* model's conversation, and no tools at all. So it's a second,
 independent call (`GeoAudit::GapsExplanation`, following the same plain
 `LittleGhost.generate` pattern as `GeoAudit::CitationCheck` rather than a full second
 `Agent`) that receives the finished score rendered as plain text and writes 2-3
 sentences about it. It has no memory of the tool-calling run and no way to change the
-number — it can only describe what Ruby already decided. The score itself is
+number. It can only describe what Ruby already decided. The score itself is
 reproducible for the same tool results and ratings every time; only the wording of its
 explanation can vary between runs, which is a contained, acceptable kind of
 nondeterminism compared to letting a model do the arithmetic itself. (Step 9 later
@@ -189,14 +189,14 @@ found that even *describing* a score needs care, see the Grounding section below
 ## What a "trace" looks like
 
 For a real audit, the sequence of tool calls (the trace) is the interesting part to
-watch — e.g.:
+watch, for example:
 ```
 get_product_data → (thin description) → check_faq_page (empty) →
 check_faq_metafield (empty) → check_structured_data (missing) →
 check_ai_citation (not mentioned) → final score + gaps
 ```
 Different products will produce different traces depending on what the agent finds
-along the way — that variability is the actual demonstration of "the agent is
+along the way. That variability is the actual demonstration of "the agent is
 deciding," not just executing a fixed script.
 
 ## Specs vs. evals
@@ -211,16 +211,16 @@ distinct rather than expecting one to stand in for the other:
 - **Evals prove the model's decisions are good.** Given the system prompt, does the
   model actually choose to call `check_faq_page` before `check_faq_metafield`? Is the
   final score reasonable? These aren't deterministic, an LLM can make a different
-  (even correct) choice on a different run, so no mock can honestly answer them —
-  only real runs against real products, compared to a hand-scored expectation (the
+  (even correct) choice on a different run, so no mock can honestly answer them.
+  Only real runs against real products, compared to a hand-scored expectation (the
   eval harness, step 10), can.
 
 `GeoAuditAgent`'s own spec suite reflects this split: `geo_audit_agent_spec.rb`
-checks wiring only (tools registered, system prompt content) — no mocking of
+checks wiring only (tools registered, system prompt content). No mocking of
 multi-turn model behavior was built, since a fake model response would only prove
 Ruby handles that fake response correctly, never that the real model would choose it.
 `geo_audit_agent_live_spec.rb` is the one place that runs the real agent against a
-real product with the real model — tagged `:live` and excluded from the default
+real product with the real model. It is tagged `:live` and excluded from the default
 suite, since it costs real Gemini quota and depends on the sandbox being reachable.
 
 That first live run immediately proved the value of keeping it separate: it surfaced
