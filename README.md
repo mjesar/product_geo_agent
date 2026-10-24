@@ -43,16 +43,22 @@ Four things keep the agent reliable: **grounding** (the explanation must match t
 
 </details>
 
-![Terminal demo of an AI agent running a GEO and AEO audit on Shopify products: it calls tools one at a time, falls back from the FAQ page to the FAQ metafield, and ends with scores of 70/100 and 33/100](assets/readme/demo.gif)
+![Terminal demo of an AI agent running GEO and AEO audits on three Shopify products: it calls tools one at a time, falls back from the FAQ page to the FAQ metafield, and ends with scores of 70/100, 33/100 and 10/100, each with a short explanation of the points lost](assets/readme/demo.gif)
 
 <details>
 <summary>Text version of the demo</summary>
 
-Running `bin/audit the-videographer-snowboard`, the agent reasons, then calls one tool at a time: `get_product_data`, `check_faq_page` (no FAQ page found), `check_faq_metafield` (the fallback, no FAQ metafield found), `check_structured_data` (Product schema yes, FAQ schema no) and `check_ai_citation` (not mentioned as a recommendation). It then prints a score of 33 / 100. The first audit in the demo, `the-complete-snowboard`, follows the same loop and ends at 70 / 100, with a short explanation of the points lost.
+The demo runs `bin/audit` on three products, one after another. For each one the agent reasons, then calls one tool at a time: `get_product_data`, `check_faq_page` (no FAQ page found), `check_faq_metafield` (the fallback, no FAQ metafield found), `check_structured_data` and `check_ai_citation` (not mentioned as a recommendation). It then prints a score and a short explanation of the points lost:
+
+1. `the-complete-snowboard`: Product schema yes, FAQ schema no. Score 70 / 100.
+2. `the-videographer-snowboard`: Product schema yes, FAQ schema no. Score 33 / 100.
+3. `the-out-of-stock-snowboard`: Product schema incomplete, FAQ schema no, empty description. Score 10 / 100.
+
+Tool calls are sped up; each explanation plays at normal speed.
 
 </details>
 
-Three real audits, one run each, against a sandbox Shopify store (the demo above shows the first two):
+Three real audits, one run each, against a sandbox Shopify store (the same three runs as the demo above):
 
 | Product | Score | What the agent found |
 |---|---|---|
