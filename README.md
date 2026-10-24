@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/badge/Rails-8.1-CC0000?logo=rubyonrails&logoColor=white" alt="Rails 8.1">
   <img src="https://img.shields.io/badge/Model-Gemini-4285F4?logo=googlegemini&logoColor=white" alt="Gemini model">
   <img src="https://img.shields.io/badge/Topic-GEO%20%2F%20AEO-2e7d4f" alt="GEO and AEO">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT License"></a>
 </p>
 
 **ProductGeoAgent is an agentic generative AI tool that checks whether AI shopping assistants (ChatGPT, Gemini, Perplexity, Google AI Overviews) can find, understand and recommend a Shopify product.** It is a Ruby on Rails command-line agent that scores a product's AI discoverability from 0 to 100 and names the top gaps to fix.
@@ -242,6 +243,8 @@ Required environment variables:
 ## Status
 
 Working end to end: five tools, `GeoAuditAgent` wiring them together with a real reasoning loop, deterministic scoring, retry and backoff for rate limits, usage tracking, a CLI (`bin/audit`) with a live trace, and an eval harness (`bin/eval`) that has run on two products so far. It is a learning project, not a complete GEO/AEO audit, so expect rough edges. It reads one product at a time and never writes to the store.
+
+The code is released under the [MIT License](LICENSE).
 
 ## Related work
 
