@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/badge/Rails-8.1-CC0000?logo=rubyonrails&logoColor=white" alt="Rails 8.1">
   <img src="https://img.shields.io/badge/Model-Gemini-4285F4?logo=googlegemini&logoColor=white" alt="Gemini model">
   <img src="https://img.shields.io/badge/Topic-GEO%20%2F%20AEO-2e7d4f" alt="GEO and AEO">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT License"></a>
 </p>
 
 **ProductGeoAgent is an agentic generative AI tool that checks whether AI shopping assistants (ChatGPT, Gemini, Perplexity, Google AI Overviews) can find, understand and recommend a Shopify product.** It is a Ruby on Rails command-line agent that scores a product's AI discoverability from 0 to 100 and names the top gaps to fix.
@@ -25,7 +26,7 @@ It is also a project about building agents, and the most useful thing it taught 
 ## See it work
 
 <p align="center">
-  <img src="docs/reasoning-loop-simple.png" alt="Diagram titled An AI agent is a reasoning loop. Four steps repeat in a cycle: Context, Reason, Act (5 tools) and Observe. When the agent has enough information, it moves from Reason to a final Answer. Four cards show what keeps the agent reliable: grounding, Ruby does the math while the model judges, evals with 5 runs each, and observability with every step traced." width="640">
+  <img src="assets/readme/reasoning-loop.svg" alt="Diagram titled An AI agent is a reasoning loop. Four steps repeat in a cycle: Context, Reason, Act and Observe. In Act the agent calls one of five tools: get_product_data, check_faq_page, check_faq_metafield (only if there is no FAQ page), check_structured_data and check_ai_citation. When it has enough information, it moves from Reason to the Answer. Four cards show what keeps it reliable: grounding, Ruby does the math, evals and observability." width="100%">
 </p>
 
 <details>
@@ -35,23 +36,34 @@ An AI agent is a loop, not a single model call. It repeats four steps until it h
 
 1. **Context**: the task, the instructions and everything learned so far.
 2. **Reason**: the model decides what to do next. When it has enough information, it moves to the final answer.
-3. **Act**: the model asks for one of five tools, and the app runs it.
+3. **Act**: the model asks for one of five tools, and the app runs it: `get_product_data`, `check_faq_page`, `check_faq_metafield` (only if there is no FAQ page), `check_structured_data` and `check_ai_citation`.
 4. **Observe**: the tool's result becomes new context, and the loop starts again.
 
-Four things keep the agent reliable: **grounding** (the explanation must match the real data), **Ruby does the math** (the model only judges, plain code calculates the score), **evals** (the real agent is run several times per product) and **observability** (every step is traced).
+Four things keep the agent reliable:
+
+- **Grounding**: the words must match the real data. The model once wrote 55 points lost when Ruby had counted 75.
+- **Ruby does the math**: the model rates three items poor, fair or good, and plain Ruby turns those ratings into the 0 to 100 score.
+- **Evals**: the real agent runs 5 times per product, checked against a saved baseline.
+- **Observability**: every step is traced live in `bin/audit`: each tool, its result and how long it took.
 
 </details>
 
-![Terminal demo of an AI agent running a GEO and AEO audit on Shopify products: it calls tools one at a time, falls back from the FAQ page to the FAQ metafield, and ends with scores of 70/100 and 33/100](assets/readme/demo.gif)
+![Terminal demo of an AI agent running GEO and AEO audits on three Shopify products: it calls tools one at a time, falls back from the FAQ page to the FAQ metafield, and ends with scores of 70/100, 33/100 and 10/100, each with a short explanation of the points lost](assets/readme/demo.gif)
 
 <details>
 <summary>Text version of the demo</summary>
 
-Running `bin/audit the-videographer-snowboard`, the agent reasons, then calls one tool at a time: `get_product_data`, `check_faq_page` (no FAQ page found), `check_faq_metafield` (the fallback, no FAQ metafield found), `check_structured_data` (Product schema yes, FAQ schema no) and `check_ai_citation` (not mentioned as a recommendation). It then prints a score of 33 / 100. The first audit in the demo, `the-complete-snowboard`, follows the same loop and ends at 70 / 100, with a short explanation of the points lost.
+The demo runs `bin/audit` on three products, one after another. For each one the agent reasons, then calls one tool at a time: `get_product_data`, `check_faq_page` (no FAQ page found), `check_faq_metafield` (the fallback, no FAQ metafield found), `check_structured_data` and `check_ai_citation` (not mentioned as a recommendation). It then prints a score and a short explanation of the points lost:
+
+1. `the-complete-snowboard`: Product schema yes, FAQ schema no. Score 70 / 100.
+2. `the-videographer-snowboard`: Product schema yes, FAQ schema no. Score 33 / 100.
+3. `the-out-of-stock-snowboard`: Product schema incomplete, FAQ schema no, empty description. Score 10 / 100.
+
+Tool calls are sped up; each explanation plays at normal speed.
 
 </details>
 
-Three real audits, one run each, against a sandbox Shopify store (the demo above shows the first two):
+Three real audits, one run each, against a sandbox Shopify store (the same three runs as the demo above):
 
 | Product | Score | What the agent found |
 |---|---|---|
@@ -243,6 +255,12 @@ Required environment variables:
 
 Working end to end: five tools, `GeoAuditAgent` wiring them together with a real reasoning loop, deterministic scoring, retry and backoff for rate limits, usage tracking, a CLI (`bin/audit`) with a live trace, and an eval harness (`bin/eval`) that has run on two products so far. It is a learning project, not a complete GEO/AEO audit, so expect rough edges. It reads one product at a time and never writes to the store.
 
+The code is released under the [MIT License](LICENSE).
+
 ## Related work
 
-This project covers agents and tool calling end to end. For the other two pillars of this agentic-commerce work, MCP server design and RAG (pgvector and Voyage embeddings), see [`shop_mcp_server`](https://github.com/mjesar/shop_mcp_server), a separate project exposing a Shopify-style store to LLM agents.
+This project covers agents and tool calling end to end. The other projects in this agentic-commerce work:
+
+- [`shop_mcp_server`](https://github.com/mjesar/shop_mcp_server): a Rails MCP server that exposes a store to LLMs, with RAG over pgvector and Voyage embeddings (MCP server design and semantic search).
+- [`ai_shop_assistant`](https://github.com/mjesar/ai_shop_assistant): a shopping chat assistant that calls Shopify's live Catalog API over MCP (the client side of MCP).
+- [`support_engineer`](https://github.com/mjesar/support_engineer): a Rails 8 AI support agent that investigates orders and shipments, searches company policies and asks a human before it acts. A learning project in progress.

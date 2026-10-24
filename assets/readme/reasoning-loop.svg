@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="t d">
+  <title id="t">An AI agent is a reasoning loop</title>
+  <desc id="d">The GEO audit agent repeats four steps: Context, Reason, Act and Observe. In Act it calls one of five tools: get_product_data, check_faq_page, check_faq_metafield (only if there is no FAQ page), check_structured_data and check_ai_citation. When it has enough information, Reason moves to the Answer. Four things keep it reliable: grounding (the words must match the real data), Ruby does the math (the model rates poor, fair or good and Ruby computes the score), evals (5 runs per product against a saved baseline) and observability (every step traced live in bin/audit).</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#c41e4a"/>
+    </marker>
+    <marker id="g" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2e7d4f"/>
+    </marker>
+  </defs>
+
+  <clipPath id="round"><rect width="1200" height="800" rx="20"/></clipPath>
+  <g clip-path="url(#round)">
+  <rect width="1200" height="800" fill="#f3f5f2"/>
+
+  <g font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="56" y="84" font-size="40" font-weight="600" fill="#14261b">An AI agent is a <tspan fill="#c41e4a">reasoning loop</tspan></text>
+    <text x="56" y="120" font-size="20" fill="#5b6b61">Shown with a Shopify product audit agent</text>
+  </g>
+
+  <!-- the loop: four nodes on a ring (centre 300,430, r=150), rose arcs clockwise between them -->
+  <g fill="none" stroke="#c41e4a" stroke-width="5" stroke-linecap="round">
+    <path d="M 167.6 359.6 A 150 150 0 0 1 229.6 297.6" marker-end="url(#a)"/>
+    <path d="M 370.4 297.6 A 150 150 0 0 1 432.4 359.6" marker-end="url(#a)"/>
+    <path d="M 432.4 500.4 A 150 150 0 0 1 370.4 562.4" marker-end="url(#a)"/>
+    <path d="M 229.6 562.4 A 150 150 0 0 1 167.6 500.4" marker-end="url(#a)"/>
+  </g>
+
+  <g font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="300" y="437" font-size="18" fill="#c41e4a">repeat</text>
+
+    <circle cx="150" cy="430" r="56" fill="#14261b"/>
+    <text x="150" y="436" font-size="18" font-weight="600" fill="#edf1ed">Context</text>
+    <circle cx="300" cy="280" r="56" fill="#14261b"/>
+    <text x="300" y="286" font-size="18" font-weight="600" fill="#edf1ed">Reason</text>
+    <circle cx="450" cy="430" r="56" fill="#14261b"/>
+    <text x="450" y="436" font-size="18" font-weight="600" fill="#edf1ed">Act</text>
+    <circle cx="300" cy="580" r="56" fill="#14261b"/>
+    <text x="300" y="586" font-size="18" font-weight="600" fill="#edf1ed">Observe</text>
+
+    <!-- step numbers -->
+    <g font-size="14" font-weight="600" fill="#ffffff">
+      <circle cx="108" cy="390" r="14" fill="#c41e4a"/><text x="108" y="395">1</text>
+      <circle cx="258" cy="240" r="14" fill="#c41e4a"/><text x="258" y="245">2</text>
+      <circle cx="408" cy="390" r="14" fill="#c41e4a"/><text x="408" y="395">3</text>
+      <circle cx="258" cy="540" r="14" fill="#c41e4a"/><text x="258" y="545">4</text>
+    </g>
+
+    <!-- exit: Reason to Answer once there is enough information -->
+    <line x1="362" y1="280" x2="498" y2="280" stroke="#2e7d4f" stroke-width="3" stroke-dasharray="8 7" marker-end="url(#g)"/>
+    <text x="430" y="266" font-size="15" fill="#2e7d4f">enough info</text>
+    <circle cx="560" cy="280" r="52" fill="#2e7d4f"/>
+    <text x="560" y="286" font-size="18" font-weight="600" fill="#ffffff">Answer</text>
+
+    <!-- step captions, outside the ring -->
+    <g font-size="14" fill="#5b6b61">
+      <text x="108" y="512">task + what it</text>
+      <text x="108" y="530">learned so far</text>
+      <text x="300" y="664">the tool's result</text>
+      <text x="300" y="682">becomes context</text>
+    </g>
+  </g>
+
+  <!-- Act: the five tools, the fallback greyed -->
+  <line x1="506" y1="430" x2="530" y2="430" stroke="#14261b" stroke-width="2"/>
+  <rect x="530" y="350" width="270" height="182" rx="12" fill="#ffffff" stroke="#d5ddd7"/>
+  <g font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="550" y="380" font-size="15" font-weight="600" fill="#14261b">5 tools, one at a time</text>
+  </g>
+  <g font-family="'JetBrains Mono', 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="13.5" fill="#14261b">
+    <text x="550" y="410">get_product_data</text>
+    <text x="550" y="434">check_faq_page</text>
+    <text x="550" y="458" fill="#8a978f">check_faq_metafield</text>
+    <text x="550" y="496">check_structured_data</text>
+    <text x="550" y="520">check_ai_citation</text>
+  </g>
+  <text x="550" y="476" font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-style="italic" fill="#8a978f">only if there is no FAQ page</text>
+
+  <!-- what keeps it reliable -->
+  <g font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="840" y="160" font-size="22" font-weight="600" fill="#14261b">What keeps it reliable</text>
+
+    <g transform="translate(840 180)">
+      <rect width="310" height="124" rx="12" fill="#ffffff" stroke="#d5ddd7"/>
+      <rect width="6" height="124" rx="3" fill="#c41e4a"/>
+      <text x="24" y="34" font-size="17" font-weight="600" fill="#14261b">Grounding</text>
+      <text x="24" y="60" font-size="14.5" fill="#4a5a50">Words must match the real data.</text>
+      <text x="24" y="82" font-size="14.5" fill="#4a5a50">The model once wrote 55 points</text>
+      <text x="24" y="104" font-size="14.5" fill="#4a5a50">lost when Ruby counted 75.</text>
+    </g>
+    <g transform="translate(840 318)">
+      <rect width="310" height="124" rx="12" fill="#ffffff" stroke="#d5ddd7"/>
+      <rect width="6" height="124" rx="3" fill="#2e7d4f"/>
+      <text x="24" y="34" font-size="17" font-weight="600" fill="#14261b">Ruby does the math</text>
+      <text x="24" y="60" font-size="14.5" fill="#4a5a50">The model rates poor, fair, good.</text>
+      <text x="24" y="82" font-size="14.5" fill="#4a5a50">Plain Ruby turns those ratings</text>
+      <text x="24" y="104" font-size="14.5" fill="#4a5a50">into the 0 to 100 score.</text>
+    </g>
+    <g transform="translate(840 456)">
+      <rect width="310" height="124" rx="12" fill="#ffffff" stroke="#d5ddd7"/>
+      <rect width="6" height="124" rx="3" fill="#2e7d4f"/>
+      <text x="24" y="34" font-size="17" font-weight="600" fill="#14261b">Evals</text>
+      <text x="24" y="60" font-size="14.5" fill="#4a5a50">The real agent runs 5 times per</text>
+      <text x="24" y="82" font-size="14.5" fill="#4a5a50">product, checked against a</text>
+      <text x="24" y="104" font-size="14.5" fill="#4a5a50">saved baseline.</text>
+    </g>
+    <g transform="translate(840 594)">
+      <rect width="310" height="124" rx="12" fill="#ffffff" stroke="#d5ddd7"/>
+      <rect width="6" height="124" rx="3" fill="#2e7d4f"/>
+      <text x="24" y="34" font-size="17" font-weight="600" fill="#14261b">Observability</text>
+      <text x="24" y="60" font-size="14.5" fill="#4a5a50">Every step is traced live in</text>
+      <text x="24" y="82" font-size="14.5" fill="#4a5a50"><tspan font-family="'JetBrains Mono', 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="13.5">bin/audit</tspan>: each tool, its</text>
+      <text x="24" y="104" font-size="14.5" fill="#4a5a50">result and how long it took.</text>
+    </g>
+
+    <text x="56" y="772" font-size="14" fill="#7f9186">Built in Ruby on Rails with Gemini  ·  Learning project, not a full GEO/AEO audit</text>
+  </g>
+
+  <!-- the mjesar mark, as in the hero (logos/ in creative-coding): the apricot tab rising from
+       the bottom edge with the navy paisley, then the name, dark here on the light ground -->
+  <g transform="translate(1030 740)">
+    <path fill="#f68c50" d="M0 5Q0 0 5 0H31Q36 0 36 5V60H0Z"/>
+    <svg x="6" y="8" width="24" height="24" viewBox="0 0 24 24">
+      <path fill="#051230" fill-rule="evenodd" d="M17 1.5C9.5 3.5 3.5 9.5 3.5 15.2a8.2 8.2 0 0 0 16.4.6c0-3.3-2.3-5.600-5-5.400-2.500.2-3.800 2.400-3 4.200.7 1.500 2.500 1.800 3.500.8-1.600.5-3-.4-2.800-1.700.2-1.500 1.800-2.200 3-1.700 2 .9 2.500 3.500 1.200 5.600-1.800 2.800-5.800 3.300-8.500 1.300-3-2.200-3.500-6.500-1.300-10C8.600 6.500 12.500 3.800 17 1.500Z"/>
+      <circle cx="8.600" cy="15.500" r="1.300" fill="#051230"/>
+    </svg>
+    <text x="50" y="31" font-family="Geist, Poppins, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#14261b">mjesar</text>
+  </g>
+  </g>
+</svg>

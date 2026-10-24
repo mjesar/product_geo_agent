@@ -1,34 +1,72 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="t d">
   <title id="t">ProductGeoAgent</title>
-  <desc id="d">An AI agent that scores how discoverable a Shopify product is to AI shopping assistants. A reasoning loop of four steps: context, reason, act, observe.</desc>
+  <desc id="d">An AI agent that scores how discoverable a Shopify product is to AI shopping assistants. A reasoning loop of four steps: context, reason, act, observe. Dark green banner on a field of dots, signed with the mjesar mark in the bottom-right corner.</desc>
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0 0 L10 5 L0 10 z" fill="#c41e4a"/>
     </marker>
+    <!-- the dot field from the mjesar profile banner, in this hero's green and rose:
+         a fine light dot grid and two sparser grids of glowing accent dots -->
+    <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="11" cy="11" r="1.6" fill="#edf1ed" fill-opacity="0.2"/>
+    </pattern>
+    <pattern id="glow2" x="150" y="120" width="242" height="242" patternUnits="userSpaceOnUse">
+      <circle cx="121" cy="121" r="6" fill="#e0476f" fill-opacity="0.14"/>
+      <circle cx="121" cy="121" r="2" fill="#e0476f" fill-opacity="0.8"/>
+    </pattern>
+    <pattern id="glow1" x="66" y="44" width="198" height="198" patternUnits="userSpaceOnUse">
+      <circle cx="99" cy="99" r="7" fill="#4fae7b" fill-opacity="0.18"/>
+      <circle cx="99" cy="99" r="2.5" fill="#4fae7b" fill-opacity="0.95"/>
+    </pattern>
+    <!-- calm the dots behind the text, as the banner does -->
+    <linearGradient id="calm" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#14261b" stop-opacity="1"/>
+      <stop offset="0.45" stop-color="#14261b" stop-opacity="0.88"/>
+      <stop offset="0.62" stop-color="#14261b" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="round"><rect width="1200" height="320" rx="20"/></clipPath>
   </defs>
 
-  <rect width="1200" height="320" rx="20" fill="#14261b"/>
+  <g clip-path="url(#round)">
+    <rect width="1200" height="320" fill="#14261b"/>
+    <rect width="1200" height="320" fill="url(#grid)"/>
+    <rect width="1200" height="320" fill="url(#glow2)"/>
+    <rect width="1200" height="320" fill="url(#glow1)"/>
+    <rect width="1200" height="320" fill="url(#calm)"/>
 
-  <g font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif">
-    <text x="64" y="86" font-size="18" font-weight="600" letter-spacing="3" fill="#4fae7b">AGENTIC AI  ·  GEO  ·  AEO</text>
-    <text x="64" y="172" font-size="76" font-weight="600" fill="#edf1ed">Product <tspan fill="#e0476f">GEO</tspan> Agent</text>
-    <rect x="66" y="196" width="72" height="4" rx="2" fill="#c41e4a"/>
-    <text x="64" y="244" font-size="26" fill="#b7c4bb">Would ChatGPT or Gemini recommend your Shopify product?</text>
-    <text x="64" y="282" font-size="18" fill="#7f9186">A Ruby on Rails agent that audits it and scores it from 0 to 100.</text>
-  </g>
+    <g font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif">
+      <text x="64" y="86" font-size="18" font-weight="600" letter-spacing="3" fill="#4fae7b">AGENTIC AI  ·  GEO  ·  AEO</text>
+      <text x="64" y="172" font-size="76" font-weight="600" fill="#edf1ed">Product <tspan fill="#e0476f">GEO</tspan> Agent</text>
+      <rect x="66" y="196" width="72" height="4" rx="2" fill="#c41e4a"/>
+      <text x="64" y="244" font-size="26" fill="#b7c4bb">Would ChatGPT or Gemini recommend your Shopify product?</text>
+      <text x="64" y="282" font-size="18" fill="#7f9186">A Ruby on Rails agent that audits it and scores it from 0 to 100.</text>
+    </g>
 
-  <!-- the reasoning loop: four steps on a ring -->
-  <g transform="translate(1010 160)" font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#edf1ed" text-anchor="middle">
-    <path d="M -56 -56 A 80 80 0 0 1 56 -56" fill="none" stroke="#c41e4a" stroke-width="4" marker-end="url(#a)"/>
-    <path d="M 56 56 A 80 80 0 0 1 -56 56" fill="none" stroke="#c41e4a" stroke-width="4" marker-end="url(#a)"/>
-    <circle cx="0" cy="-80" r="9" fill="#2e7d4f"/>
-    <circle cx="80" cy="0" r="9" fill="#2e7d4f"/>
-    <circle cx="0" cy="80" r="9" fill="#2e7d4f"/>
-    <circle cx="-80" cy="0" r="9" fill="#2e7d4f"/>
-    <text x="0" y="-102">Reason</text>
-    <text x="0" y="112">Observe</text>
-    <text x="-80" y="30">Context</text>
-    <text x="80" y="30">Act</text>
-    <text x="0" y="5" font-size="13" fill="#7f9186">repeat</text>
+    <!-- the reasoning loop: four steps on a ring, raised 32px and shrunk from r=80 to r=72
+         so the mark has the bottom-right corner to itself -->
+    <g transform="translate(1010 128)" font-family="Poppins, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#edf1ed" text-anchor="middle">
+      <path d="M -51 -51 A 72 72 0 0 1 51 -51" fill="none" stroke="#c41e4a" stroke-width="4" marker-end="url(#a)"/>
+      <path d="M 51 51 A 72 72 0 0 1 -51 51" fill="none" stroke="#c41e4a" stroke-width="4" marker-end="url(#a)"/>
+      <circle cx="0" cy="-72" r="9" fill="#2e7d4f"/>
+      <circle cx="72" cy="0" r="9" fill="#2e7d4f"/>
+      <circle cx="0" cy="72" r="9" fill="#2e7d4f"/>
+      <circle cx="-72" cy="0" r="9" fill="#2e7d4f"/>
+      <text x="0" y="-92">Reason</text>
+      <text x="0" y="102">Observe</text>
+      <text x="-72" y="30">Context</text>
+      <text x="72" y="30">Act</text>
+      <text x="0" y="5" font-size="13" fill="#7f9186">repeat</text>
+    </g>
+
+    <!-- the mjesar mark (logos/ in creative-coding), as brand/_style.py sign() draws it:
+         the apricot tab rising from the bottom edge with the navy paisley, then the name -->
+    <g transform="translate(1030 260)">
+      <path fill="#f68c50" d="M0 5Q0 0 5 0H31Q36 0 36 5V60H0Z"/>
+      <svg x="6" y="8" width="24" height="24" viewBox="0 0 24 24">
+        <path fill="#051230" fill-rule="evenodd" d="M17 1.5C9.5 3.5 3.5 9.5 3.5 15.2a8.2 8.2 0 0 0 16.4.6c0-3.3-2.3-5.600-5-5.400-2.500.2-3.800 2.400-3 4.200.7 1.500 2.500 1.800 3.500.8-1.600.5-3-.4-2.800-1.700.2-1.500 1.800-2.200 3-1.700 2 .9 2.500 3.500 1.200 5.600-1.800 2.800-5.800 3.300-8.500 1.300-3-2.200-3.500-6.500-1.300-10C8.600 6.500 12.500 3.800 17 1.500Z"/>
+        <circle cx="8.600" cy="15.500" r="1.300" fill="#051230"/>
+      </svg>
+      <text x="50" y="31" font-family="Geist, Poppins, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#edf1ed">mjesar</text>
+    </g>
   </g>
 </svg>
