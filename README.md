@@ -248,4 +248,8 @@ The code is released under the [MIT License](LICENSE).
 
 ## Related work
 
-This project covers agents and tool calling end to end. For the other two pillars of this agentic-commerce work, MCP server design and RAG (pgvector and Voyage embeddings), see [`shop_mcp_server`](https://github.com/mjesar/shop_mcp_server), a separate project exposing a Shopify-style store to LLM agents.
+This project covers agents and tool calling end to end. The other projects in this agentic-commerce work:
+
+- [`shop_mcp_server`](https://github.com/mjesar/shop_mcp_server): a Rails MCP server that exposes a store to LLMs, with RAG over pgvector and Voyage embeddings (MCP server design and semantic search).
+- [`ai_shop_assistant`](https://github.com/mjesar/ai_shop_assistant): a shopping chat assistant that calls Shopify's live Catalog API over MCP (the client side of MCP).
+- [`support_engineer`](https://github.com/mjesar/support_engineer): a Rails 8 AI support agent that investigates orders and shipments, searches company policies and asks a human before it acts. A learning project in progress.
