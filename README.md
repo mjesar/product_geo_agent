@@ -26,7 +26,7 @@ It is also a project about building agents, and the most useful thing it taught 
 ## See it work
 
 <p align="center">
-  <img src="docs/reasoning-loop-simple.png" alt="Diagram titled An AI agent is a reasoning loop. Four steps repeat in a cycle: Context, Reason, Act (5 tools) and Observe. When the agent has enough information, it moves from Reason to a final Answer. Four cards show what keeps the agent reliable: grounding, Ruby does the math while the model judges, evals with 5 runs each, and observability with every step traced." width="640">
+  <img src="assets/readme/reasoning-loop.svg" alt="Diagram titled An AI agent is a reasoning loop. Four steps repeat in a cycle: Context, Reason, Act and Observe. In Act the agent calls one of five tools: get_product_data, check_faq_page, check_faq_metafield (only if there is no FAQ page), check_structured_data and check_ai_citation. When it has enough information, it moves from Reason to the Answer. Four cards show what keeps it reliable: grounding, Ruby does the math, evals and observability." width="100%">
 </p>
 
 <details>
@@ -36,10 +36,15 @@ An AI agent is a loop, not a single model call. It repeats four steps until it h
 
 1. **Context**: the task, the instructions and everything learned so far.
 2. **Reason**: the model decides what to do next. When it has enough information, it moves to the final answer.
-3. **Act**: the model asks for one of five tools, and the app runs it.
+3. **Act**: the model asks for one of five tools, and the app runs it: `get_product_data`, `check_faq_page`, `check_faq_metafield` (only if there is no FAQ page), `check_structured_data` and `check_ai_citation`.
 4. **Observe**: the tool's result becomes new context, and the loop starts again.
 
-Four things keep the agent reliable: **grounding** (the explanation must match the real data), **Ruby does the math** (the model only judges, plain code calculates the score), **evals** (the real agent is run several times per product) and **observability** (every step is traced).
+Four things keep the agent reliable:
+
+- **Grounding**: the words must match the real data. The model once wrote 55 points lost when Ruby had counted 75.
+- **Ruby does the math**: the model rates three items poor, fair or good, and plain Ruby turns those ratings into the 0 to 100 score.
+- **Evals**: the real agent runs 5 times per product, checked against a saved baseline.
+- **Observability**: every step is traced live in `bin/audit`: each tool, its result and how long it took.
 
 </details>
 
