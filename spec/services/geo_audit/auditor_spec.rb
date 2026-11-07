@@ -75,6 +75,38 @@ RSpec.describe GeoAudit::Auditor do
       expect { GeoAudit::CurrentAudit.current }.to raise_error(GeoAudit::CurrentAudit::MissingError)
     end
 
+    context "when a tool's last attempt failed but the model still finished" do
+      let(:reporter) { instance_double(GeoAudit::Reporter::Null, event: nil) }
+
+      before do
+        stub_collaborators(run: completed_run(state: tool_results, ratings: ratings))
+        allow(GeoAuditAgent).to receive(:ask) do
+          GeoAudit::CurrentAudit.current.record_tool_failure("check_structured_data", "HTTP 503")
+          completed_run(state: tool_results, ratings: ratings)
+        end
+      end
+
+      it "raises with the real reason and never computes a score" do
+        expect { described_class.new(reporter: reporter).call(handle: "cozy-wool-socks") }
+          .to raise_error(described_class::IncompleteAudit, /check_structured_data: HTTP 503/)
+        expect(GeoAudit::Score).not_to have_received(:new)
+      end
+
+      it "announces the failure to the reporter" do
+        expect { described_class.new(reporter: reporter).call(handle: "cozy-wool-socks") }
+          .to raise_error(described_class::IncompleteAudit)
+        expect(reporter).to have_received(:event).with(
+          :failure, hash_including(step: "tool check", reason: "check_structured_data: HTTP 503")
+        )
+      end
+
+      it "does not leave a current audit set" do
+        expect { described_class.new(reporter: reporter).call(handle: "cozy-wool-socks") }
+          .to raise_error(described_class::IncompleteAudit)
+        expect { GeoAudit::CurrentAudit.current }.to raise_error(GeoAudit::CurrentAudit::MissingError)
+      end
+    end
+
     it "scores the run's tool results and ratings" do
       stub_collaborators(run: completed_run(state: tool_results, ratings: ratings))
 

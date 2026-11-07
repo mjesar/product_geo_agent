@@ -33,6 +33,7 @@ module GeoAudit
         when :start then start(**redacted)
         when :agent_call_finished then agent_call_finished(**redacted)
         when :tool_finished then tool_finished(**redacted)
+        when :tool_failed then tool_failed(**redacted)
         when :retry then retry_attempt(**redacted)
         when :score_computed then score_computed(**redacted)
         when :explanation then explanation(**redacted)
@@ -63,6 +64,13 @@ module GeoAudit
 
         @io.puts "    #{paint(DIM, "input: #{input.inspect}")}"
         @io.puts "    #{paint(DIM, "result: #{result.inspect}")}"
+      end
+
+      def tool_failed(name:, reason:, duration: nil, input: nil)
+        @io.puts "  #{paint(RED, "✗")} #{paint(BOLD, name)} → #{reason}"
+        return unless @verbose
+
+        @io.puts "    #{paint(DIM, "input: #{input.inspect}")}"
       end
 
       def retry_attempt(part:, attempt:, delay:, status:, reason:)

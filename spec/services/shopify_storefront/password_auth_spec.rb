@@ -55,6 +55,34 @@ RSpec.describe ShopifyStorefront::PasswordAuth do
         expect(auth.authenticated_connection).to eq(test_connection)
         stubs.verify_stubbed_calls
       end
+
+      it "treats a redirect away from /password as not gated" do
+        stubs.get("/password") { [ 302, { "Location" => "https://#{store_domain}/" }, "" ] }
+
+        expect(auth.authenticated_connection).to eq(test_connection)
+      end
+
+      it "treats a 404 on /password as not gated" do
+        stubs.get("/password") { [ 404, {}, "Not found" ] }
+
+        expect(auth.authenticated_connection).to eq(test_connection)
+      end
+    end
+
+    [ 429, 503 ].each do |status|
+      context "when the password page returns HTTP #{status}" do
+        before { stubs.get("/password") { [ status, {}, "unavailable" ] } }
+
+        it "raises instead of assuming the store isn't gated" do
+          expect { auth.authenticated_connection }
+            .to raise_error(ShopifyStorefront::PasswordAuth::Error, /returned HTTP #{status}/)
+        end
+
+        it "tries again on the next call instead of remembering a login that never happened" do
+          expect { auth.authenticated_connection }.to raise_error(ShopifyStorefront::PasswordAuth::Error)
+          expect { auth.authenticated_connection }.to raise_error(ShopifyStorefront::PasswordAuth::Error)
+        end
+      end
     end
   end
 end

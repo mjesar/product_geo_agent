@@ -46,6 +46,13 @@ module ShopifyStorefront
     # password POST as incorrect, regardless of the actual password.
     def fetch_authenticity_token
       response = connection.get("password")
+
+      # Only an outage or rate limit counts as a failure here. A store with no
+      # password gate may answer with a redirect or a 404, and that is the no-op case.
+      if response.status == 429 || response.status >= 500
+        raise Error, "Storefront password page for #{@store_domain} returned HTTP #{response.status}"
+      end
+
       response.body[/name="authenticity_token" value="([^"]+)"/, 1]
     end
 

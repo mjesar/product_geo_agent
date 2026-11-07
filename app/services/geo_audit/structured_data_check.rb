@@ -2,12 +2,19 @@ require "nokogiri"
 
 module GeoAudit
   class StructuredDataCheck
+    class Error < StandardError; end
+
     def initialize(password_auth: ShopifyStorefront::PasswordAuth.new)
       @password_auth = password_auth
     end
 
     def call(handle)
-      response = @password_auth.authenticated_connection.get("products/#{handle}")
+      response = @password_auth.authenticated_connection.get(product_path(handle))
+
+      # An error page has no JSON-LD either, so without this check a 503 would
+      # look exactly like a product with no structured data and lose its points.
+      raise Error, "Product page for #{handle} returned HTTP #{response.status}" unless response.success?
+
       nodes = schema_nodes(response.body)
       types = nodes.flat_map { |node| Array(node["@type"]) }.uniq
 
@@ -23,6 +30,15 @@ module GeoAudit
     end
 
     private
+
+    # The model picks this handle, and store text it has read could influence it.
+    # Encoding keeps a value like "../admin" inside the products path. Dots aren't
+    # encoded, so a handle made only of dots has to be rejected separately.
+    def product_path(handle)
+      raise Error, "Invalid product handle: #{handle.inspect}" if handle.delete(".").empty?
+
+      "products/#{URI.encode_uri_component(handle)}"
+    end
 
     def schema_nodes(html)
       document = Nokogiri::HTML(html)

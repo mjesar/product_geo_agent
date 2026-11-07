@@ -5,16 +5,23 @@ module GeoAudit
     MISSING_MESSAGE = "GeoAudit::CurrentAudit missing — was Auditor#call's " \
                        "CurrentAudit.current= assignment skipped, or already cleared?"
 
-    attr_reader :tracker, :reporter, :tool_results
+    attr_reader :tracker, :reporter, :tool_results, :tool_failures
 
     def initialize(tracker:, reporter:)
       @tracker = tracker
       @reporter = reporter
       @tool_results = {}
+      @tool_failures = {}
     end
 
+    # A success clears any earlier failure, so a retry that worked doesn't count against the audit.
     def record_tool_result(name, value)
+      @tool_failures.delete(name)
       @tool_results[name] = value
+    end
+
+    def record_tool_failure(name, reason)
+      @tool_failures[name] = reason
     end
 
     # Confirmed against a real run: little_ghost's Agent#stream hardcodes

@@ -61,6 +61,28 @@ RSpec.describe GeoAudit::Redactor do
         items: [ { password: "[REDACTED]" }, { handle: "y" } ]
       )
     end
+
+    it "keeps usage counts like input_tokens readable" do
+      redactor = described_class.new(secrets: [])
+
+      result = redactor.redact({ "input_tokens" => 120, "output_tokens" => 30, usage: { total_tokens: 150 } })
+
+      expect(result).to eq("input_tokens" => 120, "output_tokens" => 30, usage: { total_tokens: 150 })
+    end
+
+    it "still redacts a *_tokens field holding a string, array or hash" do
+      redactor = described_class.new(secrets: [])
+
+      result = redactor.redact({ access_tokens: "abc", refresh_tokens: [ "def" ], id_tokens: { a: "ghi" } })
+
+      expect(result).to eq(access_tokens: "[REDACTED]", refresh_tokens: "[REDACTED]", id_tokens: "[REDACTED]")
+    end
+
+    it "still redacts a number under a singular credential name" do
+      redactor = described_class.new(secrets: [])
+
+      expect(redactor.redact({ token: 123456, password: 42 })).to eq(token: "[REDACTED]", password: "[REDACTED]")
+    end
   end
 
   it "leaves ordinary values untouched" do
