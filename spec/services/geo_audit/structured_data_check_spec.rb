@@ -97,6 +97,50 @@ RSpec.describe GeoAudit::StructuredDataCheck do
       end
     end
 
+    context "with a handle that tries to leave the products path" do
+      # A real connection, so these assert the URL Faraday actually builds and
+      # requests, not just the string passed to #get.
+      let(:requested_urls) { [] }
+      let(:connection) do
+        urls = requested_urls
+        Faraday.new(url: "https://store.example/") do |builder|
+          builder.adapter(:test) do |stub|
+            stub.get(/.*/) do |env|
+              urls << env.url.to_s
+              [ 200, {}, "<html></html>" ]
+            end
+          end
+        end
+      end
+
+      {
+        "../admin" => "https://store.example/products/..%2Fadmin",
+        "../../password" => "https://store.example/products/..%2F..%2Fpassword",
+        "x?y=1" => "https://store.example/products/x%3Fy%3D1",
+        "x#frag" => "https://store.example/products/x%23frag",
+        "https://evil.test/a" => "https://store.example/products/https%3A%2F%2Fevil.test%2Fa"
+      }.each do |handle, expected_url|
+        it "keeps #{handle.inspect} inside the products path" do
+          check.call(handle)
+
+          expect(requested_urls).to eq([ expected_url ])
+        end
+      end
+
+      it "leaves an ordinary handle unchanged" do
+        check.call("cozy-wool-socks")
+
+        expect(requested_urls).to eq([ "https://store.example/products/cozy-wool-socks" ])
+      end
+
+      [ "", ".", "..", "..." ].each do |handle|
+        it "rejects #{handle.inspect} without making a request" do
+          expect { check.call(handle) }.to raise_error(described_class::Error, /Invalid product handle/)
+          expect(requested_urls).to be_empty
+        end
+      end
+    end
+
     context "when a script block contains invalid JSON" do
       it "skips it instead of raising" do
         stub_page(page_with("{not valid json}", complete_product))
