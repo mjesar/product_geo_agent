@@ -11,6 +11,20 @@ RSpec.describe GeoAudit::Reporter::Terminal do
     io.string.lines.map(&:chomp)
   end
 
+  it "prints a failed tool with its reason" do
+    reporter.event(:tool_failed, name: "check_structured_data", duration: 0.4, reason: "HTTP 503", input: {})
+
+    expect(output).to eq([ "  ✗ check_structured_data → HTTP 503" ])
+  end
+
+  it "redacts secrets in a failed tool's reason" do
+    redactor = GeoAudit::Redactor.new(secrets: [ "super-secret" ])
+
+    reporter(redactor:).event(:tool_failed, name: "x", duration: nil, reason: "bad key super-secret", input: {})
+
+    expect(io.string).not_to include("super-secret")
+  end
+
   it "prints a boxed header with the handle and model" do
     reporter.event(:start, handle: "cozy-wool-socks", model: "gemini-flash-lite-latest")
 

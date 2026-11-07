@@ -18,5 +18,8 @@ class CheckStructuredDataTool < LittleGhost::Tool
 
   def call(input)
     @structured_data_check.call(input.fetch("handle"))
+  rescue GeoAudit::StructuredDataCheck::Error, ShopifyStorefront::PasswordAuth::Error => error
+    # A ToolError's message reaches the model, so it can try the check again.
+    raise LittleGhost::ToolError, error.message
   end
 end

@@ -8,7 +8,13 @@ RSpec.describe GeoAudit::StructuredDataCheck do
   def stub_page(html)
     allow(connection).to receive(:get)
       .with("products/some-handle")
-      .and_return(instance_double(Faraday::Response, body: html))
+      .and_return(instance_double(Faraday::Response, body: html, status: 200, success?: true))
+  end
+
+  def stub_error_page(status)
+    allow(connection).to receive(:get)
+      .with("products/some-handle")
+      .and_return(instance_double(Faraday::Response, body: "<html>error</html>", status: status, success?: false))
   end
 
   def page_with(*json_blocks)
@@ -77,6 +83,17 @@ RSpec.describe GeoAudit::StructuredDataCheck do
         expect(result).to eq(
           product_schema: false, product_schema_complete: false, faq_schema: false, schema_types_found: []
         )
+      end
+    end
+
+    [ 302, 404, 429, 503 ].each do |status|
+      context "when the page fetch returns HTTP #{status}" do
+        it "raises instead of reporting that the page has no structured data" do
+          stub_error_page(status)
+
+          expect { check.call("some-handle") }
+            .to raise_error(described_class::Error, /some-handle returned HTTP #{status}/)
+        end
       end
     end
 

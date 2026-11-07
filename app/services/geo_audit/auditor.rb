@@ -3,6 +3,7 @@ module GeoAudit
     Result = Data.define(:run, :score, :explanation, :usage, :elapsed_seconds)
 
     class ProductNotFound < StandardError; end
+    class IncompleteAudit < StandardError; end
 
     def initialize(clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }, reporter: Reporter::Null.new,
                    product_lookup: ProductLookup.new, explain: true)
@@ -34,6 +35,8 @@ module GeoAudit
         raise "GeoAuditAgent run did not complete (#{run.outcome}): #{reason}"
       end
 
+      ensure_checks_succeeded!(current_audit)
+
       score = Score.new(tool_results: run.result.state, ratings: run.result.structured_result.value).call
       @reporter.event(:score_computed, result: score)
 
@@ -53,6 +56,17 @@ module GeoAudit
     end
 
     private
+
+    # The model can finish its ratings even after a tool failed, but Score reads a
+    # missing result as "not found". A check that never ran must not cost points,
+    # so stop here with the real reason instead of printing a wrong number.
+    def ensure_checks_succeeded!(current_audit)
+      return if current_audit.tool_failures.empty?
+
+      reason = current_audit.tool_failures.map { |name, message| "#{name}: #{message}" }.join("; ")
+      @reporter.event(:failure, step: "tool check", reason: reason, partial_results: current_audit.tool_results)
+      raise IncompleteAudit, "audit incomplete, no score given (#{reason})"
+    end
 
     # Checked in plain Ruby before the agent exists, so a typo'd handle costs one
     # Storefront request instead of several Gemini calls spent auditing nothing.

@@ -53,4 +53,32 @@ RSpec.describe GeoAudit::ToolResultCollector do
       :tool_finished, hash_including(input: tool_use.input, result: { title: "Cozy Wool Socks" })
     )
   end
+
+  context "when the tool failed" do
+    let(:result) do
+      LittleGhost::Tool::ExecutionResult.new(content: "Product page returned HTTP 503", status: :error)
+    end
+
+    it "records the failure without raising on the string value" do
+      expect { described_class.new.call(payload, context: context) }.not_to raise_error
+
+      expect(current_audit.tool_failures).to eq("get_product_data" => "Product page returned HTTP 503")
+    end
+
+    it "keeps the error message out of the results Score reads" do
+      described_class.new.call(payload, context: context)
+
+      expect(context.state["get_product_data"]).to be_nil
+      expect(current_audit.tool_results).to be_empty
+    end
+
+    it "announces a tool_failed event with the reason, not a tool_finished one" do
+      described_class.new.call(payload, context: context)
+
+      expect(reporter).to have_received(:event).with(
+        :tool_failed, hash_including(name: "get_product_data", reason: "Product page returned HTTP 503")
+      )
+      expect(reporter).not_to have_received(:event).with(:tool_finished, anything)
+    end
+  end
 end
