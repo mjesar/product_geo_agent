@@ -21,6 +21,9 @@ module GeoAudit
       # its own to_h before Redactor ever sees it.
       def plainify(value)
         case value
+        when nil
+          # nil responds to to_h too, which would turn it into {} in the trace.
+          nil
         when Hash
           value.to_h { |key, child| [ key.to_s, plainify(child) ] }
         when Array

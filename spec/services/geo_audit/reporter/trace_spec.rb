@@ -71,6 +71,19 @@ RSpec.describe GeoAudit::Reporter::Trace do
     end
   end
 
+  it "keeps token counts readable and nil values as null" do
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "run.jsonl")
+      trace = described_class.new(path: path, redactor: GeoAudit::Redactor.new(secrets: []))
+
+      trace.event(:agent_call_finished, duration: nil, usage: { input_tokens: 120, output_tokens: 30 })
+
+      expect(lines_at(path).first["data"]).to eq(
+        "duration" => nil, "usage" => { "input_tokens" => 120, "output_tokens" => 30 }
+      )
+    end
+  end
+
   it "appends across multiple events instead of overwriting" do
     Dir.mktmpdir do |dir|
       path = File.join(dir, "run.jsonl")
